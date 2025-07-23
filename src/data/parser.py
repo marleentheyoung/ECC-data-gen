@@ -177,7 +177,6 @@ def process_all_pdfs_in_directory(folder_path, pdf_folder, index):
 
     for json_file_name in tqdm(json_files, desc="📦 Processing JSON files", unit="file"):
         json_path = os.path.join(folder_path, json_file_name)
-        print(json_path)
         with open(json_path, 'r') as f:
             data = json.load(f)
 

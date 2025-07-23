@@ -17,6 +17,15 @@ python-dateutil>=2.8.0
 # Plotting and visualization
 matplotlib>=3.7.0
 
+# Memory management additions
+psutil>=5.9.0          # System and process monitoring
+ijson>=3.1.0           # Streaming JSON parser
+pympler>=0.9           # Memory profiling (optional, for debugging)
+
+# Optional: For advanced memory profiling
+# memory-profiler>=0.60.0
+# py-spy>=0.3.0
+
 # JSON and file handling (built-in to Python)
 # pathlib (built-in to Python 3.4+)
 

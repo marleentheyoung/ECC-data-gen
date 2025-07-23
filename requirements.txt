@@ -1,0 +1,34 @@
+# Core data processing
+pandas>=2.0.0
+numpy>=1.24.0
+
+# PDF processing
+PyPDF2>=3.0.0
+
+# Progress bars and UI
+tqdm>=4.65.0
+
+# Natural Language Processing
+spacy>=3.6.0
+
+# Date parsing
+python-dateutil>=2.8.0
+
+# Plotting and visualization
+matplotlib>=3.7.0
+
+# JSON and file handling (built-in to Python)
+# pathlib (built-in to Python 3.4+)
+
+# Standard library dependencies (no installation needed)
+# json
+# os
+# sys
+# re
+# logging
+# argparse
+# shutil
+# glob
+# collections
+# datetime
+# math

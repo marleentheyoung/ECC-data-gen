@@ -1,0 +1,80 @@
+[
+  {
+    "file": "CORRECTED TRANSCRIPT Diamondback Energy IncFANGUS Q1 2016 Earnings Call 4May2016 1000 AM ET - 04-05-2016.pdf",
+    "company_name": "Diamondback Energy, Inc.  (FANG ) ",
+    "ticker": "FANG",
+    "quarter": "Q1",
+    "year": "2016",
+    "texts": [
+      {
+        "speaker": "Travis D. Stice ",
+        "profession": "President, Chief Executive Officer & Director ",
+        "text": "Should crude prices continue to strengthen, we could pick up a fourth horizontal rig early in the third quarter.  Alternatively, if prices soften from current levels, we could stay at three drilling rigs or less and again moderate  the pace of completions.",
+        "climate_sentiment": "neutral"
+      },
+      {
+        "speaker": "Travis D. Stice ",
+        "profession": "President, Chief Executive Officer & Director ",
+        "text": "With over $230 million in cash and an undrawn credit facility, we're well-positioned to increase activity levels  without stressing the balance sheet. When you compare our current financial position to nearly two years ago  when oil price was at its peak, our balance sheet is now stronger, we have more liquidity and higher credit ratings.  I'm proud that we've been able to become even stronger financially during the past year.",
+        "climate_sentiment": "opportunity"
+      },
+      {
+        "speaker": "Michael L. Hollis ",
+        "profession": "Chief Operating Officer & Vice President-Drilling ",
+        "text": "Thank you, Travis. Diamondback continues to post encouraging results and achieve new company execution  records. Slide seven shows that on average our Glasscock County wells are tracking a 1 million BOE type curve.  Our Riley wells were completed using a higher sand concentration and early production time re sults for these  wells are very encouraging.",
+        "climate_sentiment": "neutral"
+      },
+      {
+        "speaker": "Michael L. Hollis ",
+        "profession": "Chief Operating Officer & Vice President-Drilling ",
+        "text": "Slide eight shows pure activity in Howard County, where we will begin completing our first three -well pad this  week. As a reminder, we have drilled two pads that target the Lower Spraberry, Wolfcamp A, and Wolfc amp B  intervals. Slide 10 shows that Diamondback continues to drill wells faster than offsetting peers in all of our core  operating areas.",
+        "climate_sentiment": "opportunity"
+      },
+      {
+        "speaker": "Michael L. Hollis ",
+        "profession": "Chief Operating Officer & Vice President-Drilling ",
+        "text": "Slide 11 shows our current realized well cost reductions, which have come down roughly 35% since the peak in  2014 and approximately 5% quarter-over-quarter. Leading edge drill, complete and equip costs are trending below  $5 million for a 7 ,500-foot lateral well and between $6 million and $6.5 million for a 10,000-foot lateral well.",
+        "climate_sentiment": "opportunity"
+      },
+      {
+        "speaker": "Michael L. Hollis ",
+        "profession": "Chief Operating Officer & Vice President-Drilling ",
+        "text": "Slide 12 shows reductions to our current realized lease operating expenses since the peak in 2014. We are  extremely proud of our production organization for continuing to lower operating expenses. We have reduced  LOE from over $8 a barrel in the first quarter of 2015 to $5.23 per BOE in the first quarter of 2016 due to reduced  cost and further improved pumping practices. As a result, we have lowered our LOE guidance to $5.50 to $6.50  per BOE from a prior range of $6 to $7 per BOE.",
+        "climate_sentiment": "neutral"
+      },
+      {
+        "speaker": "Teresa L. Dick ",
+        "profession": "Chief Financial Officer & Senior Vice President ",
+        "text": "Diamondback is in an enviable position as a company that has a stronger balance sheet, more liquidity and a  higher credit rating than it did when oil was at its peak. At the end of March 2016, we were undrawn on our  secured revolving credit facility. With over $230 million in cash and $500 million in undrawn revolver capacity,  we have ample liquidity to fund our budgeted 2016 drilling program. Our net debt to annualized first quarter 2016  EBITDA is 1.1 times, as shown on slide 13. Our practice of limiting our commitment to a portion of our borrowing  base again reflects our track record of financial discipline.",
+        "climate_sentiment": "opportunity"
+      },
+      {
+        "speaker": "Teresa L. Dick ",
+        "profession": "Chief Financial Officer & Senior Vice President ",
+        "text": "Moving to slide 14, we provide our guidance for 2016. As announced last night, we increased our 2016 production  guidance to a range of 34,000 BOE per day to 38,000 BOE per day. As a result of picking up a sec ond dedicated  completion crew, we now expect to complete a range of 35 to 7 0 gross wells. We have also lowered our 2016 LOE  guidance range to $5.50 to $6.50 per BOE from a prior range of $6 to $7.",
+        "climate_sentiment": "neutral"
+      },
+      {
+        "speaker": "Teresa L. Dick ",
+        "profession": "Chief Financial Officer & Senior Vice President ",
+        "text": "I'll now turn to Viper Energy Partners, which announced a cash distribution last night of $0.149 per unit for the  first quarter. Viper has no minimum quarterly distributions or complex ownership hierarchies. The majority of  cash flow is returned to unitholders through quarterly distribution providing upside when oil prices rebound.  Spanish Trail remains one of the most economic areas in the Permian Basin and we expect the operators will  complete their backlog of over 20 DUCs with continued strength in oil prices. At the end first quarter 2016, Viper  had $43 million drawn on its revolver.",
+        "climate_sentiment": "opportunity"
+      },
+      {
+        "speaker": "Travis D. Stice ",
+        "profession": "President, Chief Executive Officer & Director ",
+        "text": "Thank you, Tracy. Diamondback again delivered a strong quarter, demonstrating what we do best: re duce costs  and expenses, improve execution, and demonstrate capital flexibility in response to commodity prices. We've  gotten stronger financially and are poised to accelerate into an oil price recovery. We are pleased with the early  well results in Glasscock County and continue to be optimistic about Howard County potential. We look forward  to sharing our initial Howard County results in the upcoming quarters.",
+        "climate_sentiment": "opportunity"
+      }
+    ],
+    "climate_risk_sentences": {
+      "physical": [],
+      "transition": [
+        "When you compare our current financial position to nearly two years ago  when oil price was at its peak, our balance sheet is now stronger, we have more liquidity and higher credit ratings.",
+        "Diamondback is in an enviable position as a company that has a stronger balance sheet, more liquidity and a  higher credit rating than it did when oil was at its peak.",
+        "We've  gotten stronger financially and are poised to accelerate into an oil price recovery."
+      ]
+    },
+    "date": "2016-05-04"
+  }
+]

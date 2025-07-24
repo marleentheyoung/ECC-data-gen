@@ -1,0 +1,147 @@
+{
+  "stock_index": "SP500",
+  "total_files": 15,
+  "successful_files": 15,
+  "failed_files": 0,
+  "total_calls": 1341,
+  "total_paragraphs": 182254,
+  "climate_paragraphs": 15668,
+  "files": [
+    {
+      "input_file": "structured_calls_2.json",
+      "output_file": "climate_segments_2.json",
+      "total_calls": 110,
+      "total_paragraphs": 15333,
+      "climate_paragraphs": 381,
+      "climate_ratio": 0.024848366268831933,
+      "success": true
+    },
+    {
+      "input_file": "structured_calls_5.json",
+      "output_file": "climate_segments_5.json",
+      "total_calls": 0,
+      "total_paragraphs": 0,
+      "climate_paragraphs": 0,
+      "climate_ratio": 0,
+      "success": true
+    },
+    {
+      "input_file": "structured_calls_6.json",
+      "output_file": "climate_segments_6.json",
+      "total_calls": 0,
+      "total_paragraphs": 0,
+      "climate_paragraphs": 0,
+      "climate_ratio": 0,
+      "success": true
+    },
+    {
+      "input_file": "structured_calls_7.json",
+      "output_file": "climate_segments_7.json",
+      "total_calls": 0,
+      "total_paragraphs": 0,
+      "climate_paragraphs": 0,
+      "climate_ratio": 0,
+      "success": true
+    },
+    {
+      "input_file": "structured_calls_4.json",
+      "output_file": "climate_segments_4.json",
+      "total_calls": 110,
+      "total_paragraphs": 16601,
+      "climate_paragraphs": 397,
+      "climate_ratio": 0.02391422203481718,
+      "success": true
+    },
+    {
+      "input_file": "structured_calls_3.json",
+      "output_file": "climate_segments_3.json",
+      "total_calls": 126,
+      "total_paragraphs": 15644,
+      "climate_paragraphs": 1904,
+      "climate_ratio": 0.12170800306826898,
+      "success": true
+    },
+    {
+      "input_file": "structured_calls_1.json",
+      "output_file": "climate_segments_1.json",
+      "total_calls": 110,
+      "total_paragraphs": 16032,
+      "climate_paragraphs": 1839,
+      "climate_ratio": 0.11470808383233533,
+      "success": true
+    },
+    {
+      "input_file": "structured_calls_8.json",
+      "output_file": "climate_segments_8.json",
+      "total_calls": 102,
+      "total_paragraphs": 14469,
+      "climate_paragraphs": 417,
+      "climate_ratio": 0.028820236367406177,
+      "success": true
+    },
+    {
+      "input_file": "structured_calls_10.json",
+      "output_file": "climate_segments_10.json",
+      "total_calls": 111,
+      "total_paragraphs": 15937,
+      "climate_paragraphs": 461,
+      "climate_ratio": 0.02892639769090795,
+      "success": true
+    },
+    {
+      "input_file": "structured_calls_9.json",
+      "output_file": "climate_segments_9.json",
+      "total_calls": 117,
+      "total_paragraphs": 16313,
+      "climate_paragraphs": 313,
+      "climate_ratio": 0.019187151351682707,
+      "success": true
+    },
+    {
+      "input_file": "structured_calls_11.json",
+      "output_file": "climate_segments_11.json",
+      "total_calls": 119,
+      "total_paragraphs": 18155,
+      "climate_paragraphs": 2106,
+      "climate_ratio": 0.11600110162489673,
+      "success": true
+    },
+    {
+      "input_file": "structured_calls_13.json",
+      "output_file": "climate_segments_13.json",
+      "total_calls": 110,
+      "total_paragraphs": 11853,
+      "climate_paragraphs": 1642,
+      "climate_ratio": 0.13853032987429342,
+      "success": true
+    },
+    {
+      "input_file": "structured_calls_14.json",
+      "output_file": "climate_segments_14.json",
+      "total_calls": 113,
+      "total_paragraphs": 12274,
+      "climate_paragraphs": 646,
+      "climate_ratio": 0.05263157894736842,
+      "success": true
+    },
+    {
+      "input_file": "structured_calls_12.json",
+      "output_file": "climate_segments_12.json",
+      "total_calls": 106,
+      "total_paragraphs": 15029,
+      "climate_paragraphs": 1699,
+      "climate_ratio": 0.11304810699314659,
+      "success": true
+    },
+    {
+      "input_file": "structured_calls_15.json",
+      "output_file": "climate_segments_15.json",
+      "total_calls": 107,
+      "total_paragraphs": 14614,
+      "climate_paragraphs": 3863,
+      "climate_ratio": 0.2643355686328178,
+      "success": true
+    }
+  ],
+  "overall_climate_ratio": 0.08596793486014025
+}

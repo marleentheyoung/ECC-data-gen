@@ -81,8 +81,6 @@ def structure_all_transcripts_from_parts_efficient(input_folder: str, output_fol
                     'quarter': file_info['quarter'],
                     'year': file_info['year'],
                     'date': file_info['date'],
-                    'management_discussion_full': management_text,
-                    'qa_section_full': qna_text,
                     'speaker_segments_management': management_segments,
                     'speaker_segments_qa': qna_segments,
                     'management_paragraphs': management_paragraphs,

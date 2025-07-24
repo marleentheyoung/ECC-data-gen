@@ -1,0 +1,55 @@
+[
+  {
+    "file": "CORRECTED TRANSCRIPT The Home Depot IncHDUS Q1 2015 Earnings Call 19May2015 900 AM ET - 19-05-2015.pdf",
+    "company_name": "The Home Depot, Inc.  (HD) ",
+    "ticker": "HD",
+    "quarter": "Q1",
+    "year": "2015",
+    "texts": [
+      {
+        "speaker": "Edward P. Decker ",
+        "profession": "Executive Vice President-Merchandising ",
+        "text": "Pro Heavy categories continue to show great strength as we saw double-digit comps in Siding, Power Tools,  Commercial Lighting, Fencing and Power Tool Accessories. In addition, pressure-treated decking, compressors,  windows, tile-setting materials, concrete, board, insulation and fasteners all had comps above the company  average.",
+        "climate_sentiment": "opportunity"
+      },
+      {
+        "speaker": "Edward P. Decker ",
+        "profession": "Executive Vice President-Merchandising ",
+        "text": "Outdoor project categories were also strong during the quarter as we had double-digit comp sales in Lawnmowers,  Chemicals, Outdoor Power Equipment, Planters, Lawn Accessories and Grills. The core of the store continued to  perform well across the country as we saw strength in Maintenance and Repair categories. Water Heaters,  Cleaning, Hand Tools, Air Circulation, Wiring Devices, Adhesives and Light Bulbs all had comps above the  company average. In D\u00e9cor categories, Vanities, special-order cabinets, Ceiling Fans, Bath Fixtures, Decorative  Lighting and Tile also had comps above the company average.",
+        "climate_sentiment": "opportunity"
+      },
+      {
+        "speaker": "Edward P. Decker ",
+        "profession": "Executive Vice President-Merchandising ",
+        "text": "Our seventh annual Spring Black Friday delivered strong sales as the stores drove excitement around special buys  that were well-received by our customers. Comps in Gardening Tools, Soils and Mulch, Watering, Live Goods and  Patio were all above the company average. We continue to work to mitigate the effects of the drought in California  using our planning and assortment tools. We're featuring more water-saving products and landscape options like  moisture control soils and mulches, drip irrigation systems and drought-resistant plants like succulents. In  addition, our stores in California are holding clinics to educate customers on these products and how to reduce  water usage. As a result, both the Indoor and Outdoor Garden departments in the Western division posted comps  above the company average.",
+        "climate_sentiment": "opportunity"
+      },
+      {
+        "speaker": "Edward P. Decker ",
+        "profession": "Executive Vice President-Merchandising ",
+        "text": "Pros are increasingly shifting to cordless platforms that offer the power and runtime of gas. New from ECHO is a  58-volt lithium-ion battery platform featuring a string trimmer, hedge trimmer, blower, chainsaw and  lawnmower. These tools feature a brushless motor for superior power and performance that rival and in some  cases surpass corded and gas-powered counterparts. In addition to all the great new products, we're excited about  our upcoming events. The outdoor season is upon us and we will help our customers enjoy it with an incredible  lineup of great values and special buys for our Thrill of the Grill, Memorial Day, Father's Day and 4 of July events.",
+        "climate_sentiment": "opportunity"
+      },
+      {
+        "speaker": "Edward P. Decker ",
+        "profession": "Executive Vice President-Merchandising ",
+        "text": "In the first quarter, operating expense as a percent of sales decreased by 83 basis points to 21.9%. Our expense  leverage reflects the impact of positive comp sales growth. Total expenses were $15 million over our plan in the  quarter due to $7 million of net expenses incurred as part of our data breach and higher late-season snow removal  costs. Given our strong sales performance however, we leveraged expenses to plan. For the year, we are now  expecting our expenses to grow at approximately 35% of our sales growth rate.",
+        "climate_sentiment": "opportunity"
+      }
+    ],
+    "climate_risk_sentences": {
+      "physical": [
+        "We continue to work to mitigate the effects of the drought in California  using our planning and assortment tools.",
+        "Total expenses were $15 million over our plan in the  quarter due to $7 million of net expenses incurred as part of our data breach and higher late-season snow removal  costs."
+      ],
+      "transition": [
+        "We're featuring more water-saving products and landscape options like  moisture control soils and mulches, drip irrigation systems and drought-resistant plants like succulents.",
+        "In  addition, our stores in California are holding clinics to educate customers on these products and how to reduce  water usage.",
+        "Pros are increasingly shifting to cordless platforms that offer the power and runtime of gas.",
+        "New from ECHO is a  58-volt lithium-ion battery platform featuring a string trimmer, hedge trimmer, blower, chainsaw and  lawnmower.",
+        "These tools feature a brushless motor for superior power and performance that rival and in some  cases surpass corded and gas-powered counterparts."
+      ]
+    },
+    "date": "2015-05-19"
+  }
+]

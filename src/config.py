@@ -176,3 +176,21 @@ if AUTO_ADJUST_MEMORY:
     import psutil
     available_gb = psutil.virtual_memory().available / (1024 * 1024 * 1024)
     print(f"🧠 Available memory: {available_gb:.1f}GB - auto-adjusting batch sizes")
+
+# ================================
+# SEMANTIC SEARCH SETTINGS  
+# ================================
+
+# Semantic indexes directory
+SEMANTIC_INDEXES_DIR = BASE_DIR / "data" / "generated" / "semantic_indexes"
+
+# Default sentence transformer model
+DEFAULT_SENTENCE_TRANSFORMER = "sentence-transformers/all-MiniLM-L6-v2"
+
+# Embedding settings
+DEFAULT_BATCH_SIZE = 64
+DEFAULT_TOP_K = 10
+
+def get_semantic_index_folder(stock_index: str) -> Path:
+    """Get the semantic index folder path for a given stock index."""
+    return SEMANTIC_INDEXES_DIR / stock_index

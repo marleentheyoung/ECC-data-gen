@@ -202,3 +202,5 @@ config/credentials.json
 # Log files
 logs/
 *.log
+
+data/

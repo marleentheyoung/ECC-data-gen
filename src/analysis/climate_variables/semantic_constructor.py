@@ -210,7 +210,7 @@ class SemanticClimateVariableConstructor:
         
         return panel_data
     
-    def _extract_sentence_ratio_info(self, firm_snippets: List[ClimateSnippet]) -> Dict[str, Any]:
+    def _extract_sentence_ratio_info(self, firm_snippets: List[ClimateSnippet]) -> Dict[str, any]:
         """Extract sentence ratio information from firm snippets."""
         if not firm_snippets:
             return {

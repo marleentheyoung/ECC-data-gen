@@ -26,6 +26,10 @@ PROCESSED_DATA_DIR = BASE_DIR / "data" / "processed"
 OUTPUTS_DIR = BASE_DIR / "outputs"
 LOGS_DIR = BASE_DIR / "logs"
 
+# Climate analysis directories
+CLIMATE_DATA_DIR = BASE_DIR / "data" / "climate_paragraphs"
+ENHANCED_CLIMATE_DATA_DIR = BASE_DIR / "data" / "enhanced_climate_snippets"
+
 # ================================
 # PROCESSING SETTINGS
 # ================================
@@ -47,6 +51,8 @@ PDF_PREFIX_TO_REMOVE = 'CORRECTED TRANSCRIPT'
 # JSON file patterns
 RAW_JSON_PATTERN = "transcripts_data_part*.json"
 STRUCTURED_JSON_PATTERN = "structured_calls_*.json"
+CLIMATE_SEGMENTS_PATTERN = "climate_segments_*.json"
+ENHANCED_CLIMATE_SEGMENTS_PATTERN = "enhanced_climate_segments_*.json"
 
 # ================================
 # LOGGING SETTINGS
@@ -81,6 +87,19 @@ FACTSET_METADATA_LINES_BEFORE = 10
 SPACY_MODEL = "en_core_web_sm"
 
 # ================================
+# CLIMATE ANALYSIS SETTINGS
+# ================================
+
+# ClimateBERT model settings
+CLIMATE_BERT_MODEL = "climatebert/distilroberta-base-climate-detector"
+CLIMATE_CLASSIFICATION_BATCH_SIZE = 32
+CLIMATE_MIN_WORDS_PER_PARAGRAPH = 10
+
+# Climate snippet processing
+CLIMATE_RELEVANCE_THRESHOLD = 0.40
+CLIMATE_SENTIMENT_CATEGORIES = ['opportunity', 'risk', 'neutral']
+
+# ================================
 # UTILITY FUNCTIONS
 # ================================
 
@@ -100,6 +119,14 @@ def get_final_output_folder(stock_index: str) -> Path:
     """Get the final output folder path for a given stock index."""
     return OUTPUTS_DIR / "processed_transcripts" / stock_index
 
+def get_climate_data_folder(stock_index: str) -> Path:
+    """Get the climate paragraphs folder path for a given stock index."""
+    return CLIMATE_DATA_DIR / stock_index
+
+def get_enhanced_climate_data_folder(stock_index: str) -> Path:
+    """Get the enhanced climate snippets folder path for a given stock index."""
+    return ENHANCED_CLIMATE_DATA_DIR / stock_index
+
 def get_log_file_path() -> Path:
     """Get the log file path."""
     LOGS_DIR.mkdir(parents=True, exist_ok=True)
@@ -115,11 +142,19 @@ def create_output_directories(stock_index: str) -> None:
         get_raw_json_folder(stock_index),
         get_structured_json_folder(stock_index),
         get_final_output_folder(stock_index),
+        get_climate_data_folder(stock_index),
+        get_enhanced_climate_data_folder(stock_index),
         LOGS_DIR
     ]
     
     for directory in directories:
         directory.mkdir(parents=True, exist_ok=True)
+
+def create_climate_directories() -> None:
+    """Create climate analysis directories for all supported indices."""
+    for stock_index in SUPPORTED_INDICES:
+        get_climate_data_folder(stock_index).mkdir(parents=True, exist_ok=True)
+        get_enhanced_climate_data_folder(stock_index).mkdir(parents=True, exist_ok=True)
 
 # ================================
 # ENVIRONMENT VALIDATION
@@ -135,6 +170,27 @@ def validate_environment() -> bool:
     # Check if raw data directory exists
     if not RAW_DATA_DIR.exists():
         print(f"❌ Raw data directory does not exist: {RAW_DATA_DIR}")
+        return False
+    
+    return True
+
+def validate_climate_environment() -> bool:
+    """Validate that the climate analysis environment is set up."""
+    # Check if climate data directories exist
+    if not CLIMATE_DATA_DIR.exists():
+        print(f"❌ Climate data directory does not exist: {CLIMATE_DATA_DIR}")
+        return False
+    
+    # Check if we have climate data for at least one index
+    has_climate_data = False
+    for stock_index in SUPPORTED_INDICES:
+        climate_folder = get_climate_data_folder(stock_index)
+        if climate_folder.exists() and list(climate_folder.glob("climate_segments_*.json")):
+            has_climate_data = True
+            break
+    
+    if not has_climate_data:
+        print(f"❌ No climate segment data found in: {CLIMATE_DATA_DIR}")
         return False
     
     return True
@@ -173,9 +229,12 @@ if TEST_MODE:
     print(f"🧪 Test mode enabled - processing max {TEST_MODE_MAX_FILES} files")
 
 if AUTO_ADJUST_MEMORY:
-    import psutil
-    available_gb = psutil.virtual_memory().available / (1024 * 1024 * 1024)
-    print(f"🧠 Available memory: {available_gb:.1f}GB - auto-adjusting batch sizes")
+    try:
+        import psutil
+        available_gb = psutil.virtual_memory().available / (1024 * 1024 * 1024)
+        print(f"🧠 Available memory: {available_gb:.1f}GB - auto-adjusting batch sizes")
+    except ImportError:
+        pass
 
 # ================================
 # SEMANTIC SEARCH SETTINGS  
@@ -194,3 +253,52 @@ DEFAULT_TOP_K = 10
 def get_semantic_index_folder(stock_index: str) -> Path:
     """Get the semantic index folder path for a given stock index."""
     return SEMANTIC_INDEXES_DIR / stock_index
+
+# ================================
+# CLIMATE VARIABLES SETTINGS
+# ================================
+
+# Default paths for climate variables
+CLIMATE_VARIABLES_DIR = OUTPUTS_DIR / "climate_variables"
+EVENT_STUDIES_DIR = OUTPUTS_DIR / "event_studies"
+DATA_SUMMARY_DIR = OUTPUTS_DIR / "data_summary"
+
+def get_climate_variables_folder() -> Path:
+    """Get the climate variables output folder."""
+    return CLIMATE_VARIABLES_DIR
+
+def get_event_studies_folder() -> Path:
+    """Get the event studies output folder."""
+    return EVENT_STUDIES_DIR
+
+def get_data_summary_folder() -> Path:
+    """Get the data summary output folder."""
+    return DATA_SUMMARY_DIR
+
+# ================================
+# DATA QUALITY SETTINGS
+# ================================
+
+# Minimum requirements for transcript quality
+MIN_WORDS_PER_TRANSCRIPT = 100
+MIN_SENTENCES_PER_TRANSCRIPT = 10
+MIN_PARAGRAPHS_PER_TRANSCRIPT = 5
+
+# Speaker validation
+COMMON_SPEAKER_ROLES = [
+    'CEO', 'CFO', 'COO', 'CTO', 'President', 'Chairman', 'Director',
+    'Analyst', 'Operator', 'Vice President', 'Manager', 'Executive'
+]
+
+# Date validation
+MIN_YEAR = 2005
+MAX_YEAR = 2030
+
+def validate_transcript_quality(transcript_stats: dict) -> bool:
+    """Validate if a transcript meets minimum quality requirements."""
+    return (
+        transcript_stats.get('total_word_count', 0) >= MIN_WORDS_PER_TRANSCRIPT and
+        transcript_stats.get('total_sentence_count', 0) >= MIN_SENTENCES_PER_TRANSCRIPT and
+        transcript_stats.get('total_paragraph_count', 0) >= MIN_PARAGRAPHS_PER_TRANSCRIPT and
+        MIN_YEAR <= transcript_stats.get('year', 0) <= MAX_YEAR
+    )

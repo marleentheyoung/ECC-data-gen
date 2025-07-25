@@ -8,13 +8,13 @@ enhanced climate snippet files with sentence ratio information.
 
 Usage:
     # Calculate ratios for both SP500 and STOXX600
-    python scripts/3.5_calculate_sentence_ratios.py --all
+    python scripts/2.5_calculate_sentence_ratios.py --all
     
     # Calculate for SP500 only
-    python scripts/3.5_calculate_sentence_ratios.py SP500
+    python scripts/2.5_calculate_sentence_ratios.py SP500
     
     # Use custom paths
-    python scripts/3.5_calculate_sentence_ratios.py --all --raw-transcripts-path /custom/path --climate-snippets-path /custom/path
+    python scripts/2.5_calculate_sentence_ratios.py --all --raw-transcripts-path /custom/path --climate-snippets-path /custom/path
 
 Author: Marleen de Jonge
 Date: 2025

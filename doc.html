@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>FEB PhD Council Timeline 2023-2025</title>
+    <style>
+        body {
+            font-family: 'Calibri', Arial, sans-serif;
+            margin: 40px;
+            line-height: 1.4;
+            color: #000;
+        }
+        
+        h1 {
+            color: #1f4e79;
+            font-size: 18pt;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 10pt;
+        }
+        
+        th {
+            background-color: #4f81bd;
+            color: white;
+            padding: 12px 8px;
+            text-align: left;
+            font-weight: bold;
+            border: 1px solid #365f91;
+        }
+        
+        td {
+            padding: 10px 8px;
+            border: 1px solid #d0d7de;
+            vertical-align: top;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        tr:nth-child(odd) {
+            background-color: #ffffff;
+        }
+        
+        .category {
+            font-weight: bold;
+            background-color: #dce6f2 !important;
+            width: 15%;
+        }
+        
+        .year-column {
+            width: 28.33%;
+        }
+        
+        .bullet-point {
+            margin: 3px 0;
+        }
+        
+        .trend-section {
+            margin-top: 30px;
+            padding: 15px;
+            background-color: #f0f8ff;
+            border-left: 4px solid #4f81bd;
+        }
+        
+        .trend-section h2 {
+            color: #1f4e79;
+            font-size: 14pt;
+            margin-bottom: 10px;
+        }
+        
+        .trend-list {
+            margin: 10px 0;
+        }
+        
+        .download-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #4f81bd;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12pt;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        .download-btn:hover {
+            background-color: #365f91;
+        }
+        
+        @media print {
+            .download-btn { display: none; }
+            body { margin: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <button class="download-btn" onclick="downloadAsWord()">📄 Download as Word Doc</button>
+    
+    <h1>FEB PhD Council Timeline: 2023-2025</h1>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Category</th>
+                <th class="year-column">2023</th>
+                <th class="year-column">2024</th>
+                <th class="year-column">2025</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="category">Training Programs</td>
+                <td>
+                    <div class="bullet-point">• Academic Vision evaluated "super bad"</div>
+                    <div class="bullet-point">• Survey launched to redesign program</div>
+                    <div class="bullet-point">• Mini BKO discussions begin</div>
+                    <div class="bullet-point">• New course design process started</div>
+                </td>
+                <td>
+                    <div class="bullet-point">• Major overhaul of PhD training</div>
+                    <div class="bullet-point">• Collaboration with TLC (Henk, Charlotte, Hanna)</div>
+                    <div class="bullet-point">• "Skills to manage my PhD" program developed</div>
+                    <div class="bullet-point">• Didactic training restructured</div>
+                    <div class="bullet-point">• External expert consultations</div>
+                </td>
+                <td>
+                    <div class="bullet-point">• Implementation of new training</div>
+                    <div class="bullet-point">• Mandatory courses for first-year PhDs</div>
+                    <div class="bullet-point">• Rashmi delivers training on student engagement</div>
+                    <div class="bullet-point">• Supervisor training discussions</div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="category">Career Development</td>
+                <td>
+                    <div class="bullet-point">• Career event planned and executed</div>
+                    <div class="bullet-point">• 70+ participants</div>
+                    <div class="bullet-point">• Job market coaching coordination with TI</div>
+                    <div class="bullet-point">• Mock interviews organized</div>
+                    <div class="bullet-point">• Alumni involvement</div>
+                </td>
+                <td>
+                    <div class="bullet-point">• <strong>Career event cancelled</strong> - low registration</div>
+                    <div class="bullet-point">• Council pays cancellation costs</div>
+                    <div class="bullet-point">• TI Jamboree collaboration</div>
+                    <div class="bullet-point">• Rethinking event format and frequency</div>
+                    <div class="bullet-point">• ProActief career services explored</div>
+                </td>
+                <td>
+                    <div class="bullet-point">• Focus shifts to ongoing support</div>
+                    <div class="bullet-point">• Less emphasis on large events</div>
+                    <div class="bullet-point">• More integrated career development</div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="category">Teaching Issues</td>
+                <td>
+                    <div class="bullet-point">• Teaching allocation survey (49 respondents)</div>
+                    <div class="bullet-point">• Complaints about course coordination</div>
+                    <div class="bullet-point">• Guidelines document creation</div>
+                    <div class="bullet-point">• Informal complaints to Dean</div>
+                </td>
+                <td>
+                    <div class="bullet-point">• Thesis supervision workshop</div>
+                    <div class="bullet-point">• AI impact on supervision discussed</div>
+                    <div class="bullet-point">• Different rules across sections identified</div>
+                    <div class="bullet-point">• Standardization efforts begin</div>
+                </td>
+                <td>
+                    <div class="bullet-point">• Teaching coordination survey (18 respondents)</div>
+                    <div class="bullet-point">• 4/18 reported unpaid coordination</div>
+                    <div class="bullet-point">• Push for clearer guidelines</div>
+                    <div class="bullet-point">• Systematic documentation approach</div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="category">Governance</td>
+                <td>
+                    <div class="bullet-point">• OR representation discussions</div>
+                    <div class="bullet-point">• 3-year appointment concerns</div>
+                    <div class="bullet-point">• CPC participation challenges</div>
+                    <div class="bullet-point">• Dutch PhD survey participation</div>
+                </td>
+                <td>
+                    <div class="bullet-point">• <strong>Maddalena elected to Workers' Council</strong></div>
+                    <div class="bullet-point">• CPC position remains unfilled</div>
+                    <div class="bullet-point">• Multiple new council members join</div>
+                    <div class="bullet-point">• Budget approved by research directors</div>
+                </td>
+                <td>
+                    <div class="bullet-point">• Workers' Council representation continues</div>
+                    <div class="bullet-point">• Ongoing CPC recruitment challenges</div>
+                    <div class="bullet-point">• Leadership transitions (Maddalena leaving)</div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="category">Community & Social</td>
+                <td>
+                    <div class="bullet-point">• Lunch seminars restart</div>
+                    <div class="bullet-point">• PhD weekend organized (29 people, €8,040)</div>
+                    <div class="bullet-point">• Monthly drinks established</div>
+                    <div class="bullet-point">• Picnic events</div>
+                </td>
+                <td>
+                    <div class="bullet-point">• Müchait and Flavia take over seminars</div>
+                    <div class="bullet-point">• ABS involvement discussions</div>
+                    <div class="bullet-point">• PhD weekend continues</div>
+                    <div class="bullet-point">• Alumni involvement in seminars</div>
+                </td>
+                <td>
+                    <div class="bullet-point">• Focus on belonging and inclusivity</div>
+                    <div class="bullet-point">• Comedy night discussions</div>
+                    <div class="bullet-point">• Different event types for introverted students</div>
+                    <div class="bullet-point">• Continued seminar coordination</div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="category">Wellbeing & Safety</td>
+                <td>
+                    <div class="bullet-point">• Social safety working group (university-wide)</div>
+                    <div class="bullet-point">• UvA code of conduct update</div>
+                    <div class="bullet-point">• Annual talks structure discussions</div>
+                    <div class="bullet-point">• Roundtable on work-life balance</div>
+                </td>
+                <td>
+                    <div class="bullet-point">• "Know Your Rights" sessions</div>
+                    <div class="bullet-point">• Supervisor behavior awareness emails</div>
+                    <div class="bullet-point">• Ground rules for supervisor-PhD interaction</div>
+                </td>
+                <td>
+                    <div class="bullet-point">• <strong>Mental health focus intensifies</strong></div>
+                    <div class="bullet-point">• Psychology services promotion</div>
+                    <div class="bullet-point">• Power dynamics addressed</div>
+                    <div class="bullet-point">• Systematic wellbeing approach</div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="category">Administrative</td>
+                <td>
+                    <div class="bullet-point">• Budget management begins</div>
+                    <div class="bullet-point">• Research visit funding overview</div>
+                    <div class="bullet-point">• Co-authorship guidelines development</div>
+                    <div class="bullet-point">• Contract extension discussions</div>
+                </td>
+                <td>
+                    <div class="bullet-point">• Budget approval achieved</div>
+                    <div class="bullet-point">• Research visit information updated</div>
+                    <div class="bullet-point">• New member onboarding processes</div>
+                    <div class="bullet-point">• PhD weekend cost management</div>
+                </td>
+                <td>
+                    <div class="bullet-point">• <strong>Ariba reimbursement system issues</strong></div>
+                    <div class="bullet-point">• <strong>Air quality problems (ABS basement)</strong></div>
+                    <div class="bullet-point">• Extension rejection issues</div>
+                    <div class="bullet-point">• Onboarding systematization</div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="category">Major Challenges</td>
+                <td>
+                    <div class="bullet-point">• Poor training program evaluation</div>
+                    <div class="bullet-point">• Teaching allocation inequities</div>
+                    <div class="bullet-point">• Limited career event resources</div>
+                    <div class="bullet-point">• CPC recruitment difficulties</div>
+                </td>
+                <td>
+                    <div class="bullet-point">• Career event cancellation</div>
+                    <div class="bullet-point">• Training program transition</div>
+                    <div class="bullet-point">• Teaching standardization needs</div>
+                    <div class="bullet-point">• Thesis supervision confusion</div>
+                </td>
+                <td>
+                    <div class="bullet-point">• Administrative system changes</div>
+                    <div class="bullet-point">• Workplace health issues</div>
+                    <div class="bullet-point">• Leadership continuity</div>
+                    <div class="bullet-point">• TI relocation planning</div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="category">Key Achievements</td>
+                <td>
+                    <div class="bullet-point">• Training redesign initiated</div>
+                    <div class="bullet-point">• Career event success (70+ attendees)</div>
+                    <div class="bullet-point">• Budget framework established</div>
+                    <div class="bullet-point">• Community events launched</div>
+                </td>
+                <td>
+                    <div class="bullet-point">• Workers' Council representation achieved</div>
+                    <div class="bullet-point">• New training program developed</div>
+                    <div class="bullet-point">• Budget approval secured</div>
+                    <div class="bullet-point">• Expanded council membership</div>
+                </td>
+                <td>
+                    <div class="bullet-point">• Systematic wellbeing approach</div>
+                    <div class="bullet-point">• Improved documentation processes</div>
+                    <div class="bullet-point">• Stronger focus on inclusion</div>
+                    <div class="bullet-point">• Better long-term planning</div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="category">Future Planning</td>
+                <td>
+                    <div class="bullet-point">• New training program design</div>
+                    <div class="bullet-point">• Career event improvements</div>
+                    <div class="bullet-point">• Teaching guidelines development</div>
+                    <div class="bullet-point">• Social safety initiatives</div>
+                </td>
+                <td>
+                    <div class="bullet-point">• Event format reconsideration</div>
+                    <div class="bullet-point">• Training implementation planning</div>
+                    <div class="bullet-point">• Teaching standardization</div>
+                    <div class="bullet-point">• Community building focus</div>
+                </td>
+                <td>
+                    <div class="bullet-point">• TI integration preparation (2026)</div>
+                    <div class="bullet-point">• Leadership succession planning</div>
+                    <div class="bullet-point">• Mental health resource expansion</div>
+                    <div class="bullet-point">• Systematic problem tracking</div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    
+    <div class="trend-section">
+        <h2>Key Trends Across Years</h2>
+        <div class="trend-list">
+            <div class="bullet-point"><strong>2023:</strong> Crisis response and foundation building</div>
+            <div class="bullet-point"><strong>2024:</strong> Major reforms and some setbacks</div>
+            <div class="bullet-point"><strong>2025:</strong> Implementation focus and systematic approaches</div>
+            <div class="bullet-point"><strong>Persistent Issues:</strong> CPC recruitment, teaching allocation, community engagement</div>
+            <div class="bullet-point"><strong>Growing Emphasis:</strong> Wellbeing, mental health, systematic documentation</div>
+        </div>
+    </div>
+
+    <script>
+        function downloadAsWord() {
+            // Get the HTML content
+            const htmlContent = document.documentElement.outerHTML;
+            
+            // Create Word document structure
+            const wordDocument = `
+                <html xmlns:o='urn:schemas-microsoft-com:office:office' 
+                      xmlns:w='urn:schemas-microsoft-com:office:word' 
+                      xmlns='http://www.w3.org/TR/REC-html40'>
+                <head>
+                    <meta charset="utf-8">
+                    <title>FEB PhD Council Timeline 2023-2025</title>
+                    <!--[if gte mso 9]>
+                    <xml>
+                        <w:WordDocument>
+                            <w:View>Print</w:View>
+                            <w:Zoom>90</w:Zoom>
+                            <w:DoNotPromptForConvert/>
+                            <w:DoNotShowRevisions/>
+                            <w:DoNotPrintRevisions/>
+                            <w:DoNotShowMarkup/>
+                            <w:DoNotShowComments/>
+                            <w:DoNotShowInsertionsAndDeletions/>
+                            <w:DoNotShowPropertyChanges/>
+                        </w:WordDocument>
+                    </xml>
+                    <![endif]-->
+                    <style>
+                        @page { margin: 1in; }
+                        body { font-family: Calibri, sans-serif; font-size: 11pt; }
+                        table { border-collapse: collapse; width: 100%; }
+                        th, td { border: 1pt solid black; padding: 6pt; }
+                        th { background-color: #4f81bd; color: white; }
+                        .download-btn { display: none; }
+                    </style>
+                </head>
+                <body>${document.body.innerHTML}</body>
+                </html>`;
+            
+            // Create blob and download
+            const blob = new Blob([wordDocument], {
+                type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            });
+            
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'FEB_PhD_Council_Timeline_2023-2025.doc';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>

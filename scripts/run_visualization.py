@@ -49,7 +49,7 @@ def get_climate_events():
 
 def load_exposure_data(start_year=None, end_year=None):
     """Load climate exposure data."""
-    file_path = Path("/Users/marleendejonge/Desktop/ECC-data-generation/outputs/climate_exposure_ratios.csv")
+    file_path = Path("/Users/marleendejonge/Desktop/ECC-data-generation/outputs/variables/total_exposure/climate_exposure_ratios.csv")
     
     if not file_path.exists():
         raise FileNotFoundError(f"Exposure data not found: {file_path}")
@@ -106,7 +106,7 @@ def load_exposure_data(start_year=None, end_year=None):
 
 def load_risk_data(start_year=None, end_year=None):
     """Load climate risk data."""
-    file_path = Path("/Users/marleendejonge/Desktop/ECC-data-generation/outputs/climate_risk_exposure.csv")
+    file_path = Path("/Users/marleendejonge/Desktop/ECC-data-generation/outputs/variables/cc_risk/full_df.csv")
     
     if not file_path.exists():
         raise FileNotFoundError(f"Risk data not found: {file_path}")
@@ -441,16 +441,16 @@ def main():
             year_range=[2010,2025]
         )
 
-        # # 2. Climate Risk Plot
-        # print("\n📥 Loading climate risk data...")
-        # risk_data = load_risk_data()
+        # 2. Climate Risk Plot
+        print("\n📥 Loading climate risk data...")
+        risk_data = load_risk_data()
         
-        # plot_jof_style_regional(
-        #     data=risk_data,
-        #     variable_name='climate_risk_exposure',
-        #     title='Climate Risk Exposure in Earnings Calls',
-        #     output_path=output_dir / 'jof_climate_risk.png'
-        # )
+        plot_jof_style_regional(
+            data=risk_data,
+            variable_name='climate_risk_exposure',
+            title='Climate Risk Exposure in Earnings Calls',
+            output_path=output_dir / 'jof_climate_risk.png'
+        )
         
         print(f"\n✅ Plots completed!")
         print(f"📁 Saved to: {output_dir}")

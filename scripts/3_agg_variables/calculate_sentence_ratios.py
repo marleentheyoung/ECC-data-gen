@@ -1,20 +1,9 @@
 #!/usr/bin/env python3
 """
-Script to calculate sentence ratios between climate snippets and full earnings calls.
+Clean script to calculate sentence ratios between climate snippets and structured earnings calls.
 
-This script loads climate snippets and full transcript data, calculates the ratio
-of climate-related sentences to total sentences in each earnings call, and saves
-enhanced climate snippet files with sentence ratio information.
-
-Usage:
-    # Calculate ratios for both SP500 and STOXX600
-    python scripts/2.5_calculate_sentence_ratios.py --all
-    
-    # Calculate for SP500 only
-    python scripts/2.5_calculate_sentence_ratios.py SP500
-    
-    # Use custom paths
-    python scripts/2.5_calculate_sentence_ratios.py --all --raw-transcripts-path /custom/path --climate-snippets-path /custom/path
+This script matches climate snippet files with structured transcript files and calculates
+what percentage of each earnings call was devoted to climate topics.
 
 Author: Marleen de Jonge
 Date: 2025
@@ -27,7 +16,6 @@ import re
 import sys
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional
-from collections import defaultdict
 from tqdm import tqdm
 import gc
 
@@ -47,438 +35,265 @@ def setup_logging(verbose: bool = False):
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         handlers=[
             logging.StreamHandler(),
-            logging.FileHandler(LOGS_DIR / 'sentence_ratios.log', mode='a')
+            logging.FileHandler(LOGS_DIR / 'sentence_ratios.log', mode='w')  # Fresh log file
         ]
     )
 
 
 def count_sentences(text: str) -> int:
-    """
-    Count sentences in text using robust heuristics.
-    
-    Args:
-        text: Input text
-        
-    Returns:
-        Number of sentences
-    """
+    """Count sentences in text using robust heuristics."""
     if not text or not text.strip():
         return 0
     
-    # Clean text first
     text = text.strip()
-    
-    # Split on sentence endings, but be careful with abbreviations and numbers
-    # This regex looks for sentence endings followed by whitespace and capital letter or end of string
+    # Split on sentence endings followed by whitespace and capital letter
     sentences = re.split(r'[.!?]+(?=\s+[A-Z]|\s*$)', text)
-    
-    # Filter empty strings and very short "sentences" (likely artifacts)
+    # Filter very short sentences (likely artifacts)
     valid_sentences = [s.strip() for s in sentences if s.strip() and len(s.strip()) > 10]
     
     return len(valid_sentences)
 
 
-def load_full_transcripts(raw_transcripts_path: Path, stock_index: str) -> Dict[str, Dict[str, any]]:
+def find_file_pairs(structured_path: Path, climate_path: Path, stock_index: str) -> List[Tuple[Path, Path]]:
     """
-    Load full transcript data from raw JSON files.
+    Find matching file pairs between climate and structured transcript files.
     
-    Args:
-        raw_transcripts_path: Path to raw transcripts folder
-        stock_index: Stock index (SP500 or STOXX600)
-        
     Returns:
-        Dictionary mapping filenames to transcript data with sentence counts
+        List of (climate_file, structured_file) tuples
     """
     logger = logging.getLogger(__name__)
     
-    index_path = raw_transcripts_path / stock_index
-    if not index_path.exists():
-        raise FileNotFoundError(f"Raw transcripts path not found: {index_path}")
+    # Get all files
+    climate_files = sorted(climate_path.glob("climate_segments_*.json"))
+    structured_files = sorted(structured_path.glob("structured_calls_*.json"))
     
-    # Find all transcript part files
-    part_files = list(index_path.glob("transcripts_data_part*.json"))
-    if not part_files:
-        raise FileNotFoundError(f"No transcript part files found in: {index_path}")
+    logger.info(f"Found {len(climate_files)} climate files")
+    logger.info(f"Found {len(structured_files)} structured files")
     
-    logger.info(f"Found {len(part_files)} transcript part files for {stock_index}")
+    if not climate_files:
+        raise FileNotFoundError(f"No climate segment files found in {climate_path}")
+    if not structured_files:
+        raise FileNotFoundError(f"No structured call files found in {structured_path}")
     
-    all_transcripts = {}
+    # Try to pair files by number
+    pairs = []
     
-    for part_file in tqdm(part_files, desc=f"Loading {stock_index} transcripts"):
-        try:
-            with open(part_file, 'r', encoding='utf-8') as f:
-                part_data = json.load(f)
-            
-            # Process each transcript in this part
-            for filename, transcript_data in part_data.items():
-                # Extract text sections
-                mgmt_text = transcript_data.get('Management Discussion', '')
-                qa_text = transcript_data.get('Q&A Section', '')
-                
-                # Count sentences in each section
-                mgmt_sentences = count_sentences(mgmt_text)
-                qa_sentences = count_sentences(qa_text)
-                total_sentences = mgmt_sentences + qa_sentences
-                
-                # Store transcript info
-                all_transcripts[filename] = {
-                    'file': transcript_data.get('File', filename),
-                    'management_text': mgmt_text,
-                    'qa_text': qa_text,
-                    'management_sentences': mgmt_sentences,
-                    'qa_sentences': qa_sentences,
-                    'total_sentences': total_sentences,
-                    'original_data': transcript_data  # Keep original for reference
-                }
-            
-            # Clear from memory
-            del part_data
-            gc.collect()
-            
-        except Exception as e:
-            logger.error(f"Error loading {part_file}: {e}")
+    for climate_file in climate_files:
+        # Extract number from climate_segments_N.json
+        climate_match = re.search(r'climate_segments_(\d+)\.json', climate_file.name)
+        if not climate_match:
+            logger.warning(f"Could not extract number from: {climate_file.name}")
             continue
-    
-    logger.info(f"✅ Loaded {len(all_transcripts)} full transcripts for {stock_index}")
-    return all_transcripts
-
-
-def load_climate_snippets(climate_snippets_path: Path, stock_index: str) -> List[Dict]:
-    """
-    Load climate snippet data.
-    
-    Args:
-        climate_snippets_path: Path to climate snippets folder
-        stock_index: Stock index (SP500 or STOXX600)
         
+        climate_num = int(climate_match.group(1))
+        
+        # Look for matching structured file
+        matched = False
+        for structured_file in structured_files:
+            structured_match = re.search(r'structured_calls_(\d+)\.json', structured_file.name)
+            if structured_match:
+                structured_num = int(structured_match.group(1))
+                if structured_num == climate_num:
+                    pairs.append((climate_file, structured_file))
+                    logger.info(f"✅ Exact match: {climate_file.name} ↔ {structured_file.name}")
+                    matched = True
+                    break
+        
+        if not matched:
+            logger.warning(f"❌ No exact match for: {climate_file.name}")
+    
+    # If we have unmatched files, try sequential pairing
+    if len(pairs) < min(len(climate_files), len(structured_files)):
+        logger.info("Attempting sequential pairing for unmatched files...")
+        
+        # Get unmatched files
+        paired_climate = {pair[0] for pair in pairs}
+        paired_structured = {pair[1] for pair in pairs}
+        
+        unmatched_climate = [f for f in climate_files if f not in paired_climate]
+        unmatched_structured = [f for f in structured_files if f not in paired_structured]
+        
+        # Pair sequentially
+        for i in range(min(len(unmatched_climate), len(unmatched_structured))):
+            pairs.append((unmatched_climate[i], unmatched_structured[i]))
+            logger.info(f"📋 Sequential pair: {unmatched_climate[i].name} ↔ {unmatched_structured[i].name}")
+    
+    logger.info(f"📊 Total pairs created: {len(pairs)}")
+    return pairs
+
+
+def process_file_pair(climate_file: Path, structured_file: Path) -> List[Dict]:
+    """
+    Process one climate/structured file pair.
+    
     Returns:
-        List of climate snippet files data
+        List of enhanced climate transcript data
     """
     logger = logging.getLogger(__name__)
     
-    index_path = climate_snippets_path / stock_index
-    if not index_path.exists():
-        raise FileNotFoundError(f"Climate snippets path not found: {index_path}")
+    # Load files
+    with open(climate_file, 'r', encoding='utf-8') as f:
+        climate_data = json.load(f)
     
-    # Find all climate segment files
-    snippet_files = list(index_path.glob("climate_segments_*.json"))
-    if not snippet_files:
-        raise FileNotFoundError(f"No climate segment files found in: {index_path}")
+    with open(structured_file, 'r', encoding='utf-8') as f:
+        structured_data = json.load(f)
     
-    logger.info(f"Found {len(snippet_files)} climate snippet files for {stock_index}")
+    # Create lookup dictionary for structured data
+    structured_lookup = {}
+    for transcript in structured_data:
+        filename = transcript.get('file') or transcript.get('filename', '')
+        if filename:
+            structured_lookup[filename] = transcript
     
-    all_snippet_data = []
+    logger.info(f"Processing: {len(climate_data)} climate transcripts vs {len(structured_lookup)} structured transcripts")
     
-    for snippet_file in tqdm(snippet_files, desc=f"Loading {stock_index} climate snippets"):
-        try:
-            with open(snippet_file, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-            
-            all_snippet_data.append({
-                'file': snippet_file,
-                'data': data
-            })
-            
-        except Exception as e:
-            logger.error(f"Error loading {snippet_file}: {e}")
+    enhanced_data = []
+    matches = 0
+    
+    for climate_transcript in tqdm(climate_data, desc=f"Processing {climate_file.name}", leave=False):
+        climate_filename = climate_transcript.get('file', '')
+        
+        if not climate_filename:
+            logger.warning("Climate transcript missing filename field")
+            enhanced_data.append(create_unmatched_transcript(climate_transcript))
             continue
-    
-    logger.info(f"✅ Loaded {len(all_snippet_data)} climate snippet files for {stock_index}")
-    return all_snippet_data
-
-
-def match_filenames(climate_filename: str, transcript_filenames: List[str]) -> Optional[str]:
-    """
-    Match climate snippet filename to transcript filename.
-    
-    Args:
-        climate_filename: Filename from climate snippets
-        transcript_filenames: List of available transcript filenames
         
-    Returns:
-        Matching transcript filename or None
-    """
-    # Direct match first
-    if climate_filename in transcript_filenames:
-        return climate_filename
+        # Try to find matching structured transcript
+        if climate_filename in structured_lookup:
+            matches += 1
+            structured_transcript = structured_lookup[climate_filename]
+            enhanced_transcript = create_matched_transcript(climate_transcript, structured_transcript, climate_filename)
+            enhanced_data.append(enhanced_transcript)
+        else:
+            logger.debug(f"No match for: {climate_filename}")
+            enhanced_data.append(create_unmatched_transcript(climate_transcript))
     
-    # Try with "CORRECTED TRANSCRIPT " prefix
-    corrected_filename = f"CORRECTED TRANSCRIPT {climate_filename}"
-    if corrected_filename in transcript_filenames:
-        return corrected_filename
+    match_rate = matches / len(climate_data) if climate_data else 0
+    logger.info(f"📈 Match rate: {matches}/{len(climate_data)} ({match_rate:.1%})")
     
-    # Try removing "CORRECTED TRANSCRIPT " prefix
-    if climate_filename.startswith("CORRECTED TRANSCRIPT "):
-        clean_filename = climate_filename.replace("CORRECTED TRANSCRIPT ", "")
-        if clean_filename in transcript_filenames:
-            return clean_filename
-    
-    # Fuzzy matching - look for key components (company, quarter, year)
-    for transcript_filename in transcript_filenames:
-        # Extract key identifiers and see if they match
-        if (extract_key_identifiers(climate_filename) == 
-            extract_key_identifiers(transcript_filename)):
-            return transcript_filename
-    
-    return None
+    return enhanced_data
 
 
-def extract_key_identifiers(filename: str) -> Tuple[str, str, str]:
-    """
-    Extract key identifiers (company ticker, quarter, year) from filename.
+def create_matched_transcript(climate_transcript: Dict, structured_transcript: Dict, filename: str) -> Dict:
+    """Create enhanced transcript from matched climate and structured data."""
     
-    Args:
-        filename: Filename to parse
+    # Count sentences from structured transcript
+    mgmt_sentences = 0
+    qa_sentences = 0
+    
+    # Count management sentences
+    for segment in structured_transcript.get('speaker_segments_management', []):
+        for paragraph in segment.get('paragraphs', []):
+            mgmt_sentences += count_sentences(paragraph)
+    
+    # Count Q&A sentences
+    for segment in structured_transcript.get('speaker_segments_qa', []):
+        for paragraph in segment.get('paragraphs', []):
+            qa_sentences += count_sentences(paragraph)
+    
+    total_sentences = mgmt_sentences + qa_sentences
+    
+    # Count climate sentences and enhance text snippets
+    climate_sentence_count = 0
+    enhanced_texts = []
+    
+    for text_snippet in climate_transcript.get('texts', []):
+        snippet_text = text_snippet.get('text', '')
+        snippet_sentences = count_sentences(snippet_text)
+        climate_sentence_count += snippet_sentences
         
-    Returns:
-        Tuple of (ticker, quarter, year)
-    """
-    # Remove common prefixes and suffixes
-    clean_name = filename.replace("CORRECTED TRANSCRIPT ", "").replace(".pdf", "")
+        enhanced_text = text_snippet.copy()
+        enhanced_text['sentence_count'] = snippet_sentences
+        enhanced_texts.append(enhanced_text)
     
-    # Try to extract ticker, quarter, year using regex
-    import re
+    # Calculate ratio
+    ratio = climate_sentence_count / total_sentences if total_sentences > 0 else 0.0
     
-    # Look for patterns like "Q1 2010" or "Q1 2010"
-    quarter_year_match = re.search(r'Q([1-4])\s+(\d{4})', clean_name)
-    quarter = quarter_year_match.group(1) if quarter_year_match else ""
-    year = quarter_year_match.group(2) if quarter_year_match else ""
+    # Create enhanced transcript
+    enhanced = climate_transcript.copy()
+    enhanced.update({
+        'texts': enhanced_texts,
+        'climate_sentence_count': climate_sentence_count,
+        'total_sentences_in_call': total_sentences,
+        'climate_sentence_ratio': ratio,
+        'management_sentences': mgmt_sentences,
+        'qa_sentences': qa_sentences,
+        'matched_transcript_file': filename
+    })
     
-    # Look for ticker (usually 2-5 capital letters)
-    ticker_match = re.search(r'\b([A-Z]{2,5})\b', clean_name)
-    ticker = ticker_match.group(1) if ticker_match else ""
-    
-    return (ticker, f"Q{quarter}", year)
+    return enhanced
 
-def get_structured_transcript_data(filename: str, stock_index: str) -> Optional[Dict]:
-    """
-    Load structured transcript data to get paragraph counts from speaker segments.
+
+def create_unmatched_transcript(climate_transcript: Dict) -> Dict:
+    """Create enhanced transcript for unmatched climate data."""
     
-    Args:
-        filename: Filename to match
-        stock_index: Stock index (SP500 or STOXX600)
+    # Still count climate sentences
+    climate_sentence_count = 0
+    enhanced_texts = []
+    
+    for text_snippet in climate_transcript.get('texts', []):
+        snippet_text = text_snippet.get('text', '')
+        snippet_sentences = count_sentences(snippet_text)
+        climate_sentence_count += snippet_sentences
         
-    Returns:
-        Structured transcript data or None if not found
-    """
-    # Path to structured JSONs - adjust this path as needed
-    structured_path = Path("/Users/marleendejonge/Desktop/ECC-data-generation/data/processed/structured_jsons") / stock_index
+        enhanced_text = text_snippet.copy()
+        enhanced_text['sentence_count'] = snippet_sentences
+        enhanced_texts.append(enhanced_text)
     
-    if not structured_path.exists():
-        return None
+    # Create transcript with null ratios
+    enhanced = climate_transcript.copy()
+    enhanced.update({
+        'texts': enhanced_texts,
+        'climate_sentence_count': climate_sentence_count,
+        'total_sentences_in_call': None,
+        'climate_sentence_ratio': None,
+        'management_sentences': None,
+        'qa_sentences': None,
+        'matched_transcript_file': None
+    })
     
-    # Find all structured JSON files
-    structured_files = list(structured_path.glob("structured_calls_*.json"))
-    
-    for structured_file in structured_files:
-        try:
-            with open(structured_file, 'r', encoding='utf-8') as f:
-                structured_data = json.load(f)
-            
-            # Look for matching transcript
-            for transcript in structured_data:
-                transcript_filename = transcript.get('filename') or transcript.get('file', '')
-                
-                # Try various matching approaches
-                if (transcript_filename == filename or 
-                    transcript_filename == filename.replace("CORRECTED TRANSCRIPT ", "") or
-                    f"CORRECTED TRANSCRIPT {transcript_filename}" == filename):
-                    return transcript
-                    
-        except Exception as e:
-            continue
-    
-    return None
-
-def calculate_sentence_ratios(climate_snippet_data: List[Dict], 
-                            full_transcripts: Dict[str, Dict],
-                            stock_index: str) -> List[Dict]:
-    """
-    Calculate sentence ratios for climate snippets.
-    
-    Args:
-        climate_snippet_data: List of climate snippet file data
-        full_transcripts: Dictionary of full transcript data
-        
-    Returns:
-        List of enhanced climate snippet data with sentence ratios
-    """
-    logger = logging.getLogger(__name__)
-    
-    enhanced_snippet_data = []
-    transcript_filenames = list(full_transcripts.keys())
-    
-    total_matches = 0
-    total_transcripts = 0
-    
-    for snippet_file_data in climate_snippet_data:
-        snippet_file = snippet_file_data['file']
-        snippet_data = snippet_file_data['data']
-        
-        enhanced_data = []
-        
-        for transcript in tqdm(snippet_data, desc=f"Processing {snippet_file.name}", leave=False):
-            total_transcripts += 1
-            
-            # Get the filename from the transcript
-            climate_filename = transcript.get('file', '')
-            if not climate_filename:
-                logger.warning(f"No filename found in climate transcript")
-                continue
-            
-            # Try to match with full transcript
-            matched_filename = match_filenames(climate_filename, transcript_filenames)
-            
-            if matched_filename and matched_filename in full_transcripts:
-                total_matches += 1
-                full_transcript = full_transcripts[matched_filename]
-                
-                # Count sentences in climate snippets
-                climate_sentence_count = 0
-                enhanced_texts = []
-
-                for text_snippet in transcript.get('texts', []):
-                    snippet_text = text_snippet.get('text', '')
-                    snippet_sentences = count_sentences(snippet_text)
-                    climate_sentence_count += snippet_sentences
-                    
-                    # Add sentence count to snippet
-                    enhanced_text_snippet = text_snippet.copy()
-                    enhanced_text_snippet['sentence_count'] = snippet_sentences
-                    enhanced_texts.append(enhanced_text_snippet)
-
-                # Calculate paragraph counts from speaker segments (from the structured transcript data)
-                # We need to load the structured transcript to get the correct paragraph counts
-                mgmt_paragraph_count = 0
-                qa_paragraph_count = 0
-
-                # Try to get structured transcript data for paragraph counting
-                # This would require loading the structured JSON files - we'll add a helper function
-                structured_transcript = get_structured_transcript_data(climate_filename, stock_index)
-                if structured_transcript:
-                    # Count paragraphs from speaker segments
-                    for segment in structured_transcript.get('speaker_segments_management', []):
-                        mgmt_paragraph_count += len(segment.get('paragraphs', []))
-                    
-                    for segment in structured_transcript.get('speaker_segments_qa', []):
-                        qa_paragraph_count += len(segment.get('paragraphs', []))
-
-                total_paragraph_count = mgmt_paragraph_count + qa_paragraph_count
-
-                # Calculate ratio
-                total_sentences = full_transcript['total_sentences']
-                sentence_ratio = climate_sentence_count / total_sentences if total_sentences > 0 else 0.0
-
-                # Create enhanced transcript data
-                enhanced_transcript = transcript.copy()
-                enhanced_transcript.update({
-                    'texts': enhanced_texts,
-                    'climate_sentence_count': climate_sentence_count,
-                    'total_sentences_in_call': total_sentences,
-                    'climate_sentence_ratio': sentence_ratio,
-                    'management_sentences': full_transcript['management_sentences'],
-                    'qa_sentences': full_transcript['qa_sentences'],
-                    'management_paragraph_count': mgmt_paragraph_count,
-                    'qa_paragraph_count': qa_paragraph_count,
-                    'total_paragraph_count': total_paragraph_count,
-                    'matched_transcript_file': matched_filename
-                })
-                enhanced_data.append(enhanced_transcript)
-                
-            else:
-                # No match found - add with zero ratios
-                logger.warning(f"No matching full transcript found for: {climate_filename}")
-                
-                # Still count sentences in climate snippets
-                climate_sentence_count = 0
-                enhanced_texts = []
-                
-                for text_snippet in transcript.get('texts', []):
-                    snippet_text = text_snippet.get('text', '')
-                    snippet_sentences = count_sentences(snippet_text)
-                    climate_sentence_count += snippet_sentences
-                    
-                    enhanced_text_snippet = text_snippet.copy()
-                    enhanced_text_snippet['sentence_count'] = snippet_sentences
-                    enhanced_texts.append(enhanced_text_snippet)
-                
-                # Create transcript with unknown total
-                enhanced_transcript = transcript.copy()
-                enhanced_transcript.update({
-                    'texts': enhanced_texts,
-                    'climate_sentence_count': climate_sentence_count,
-                    'total_sentences_in_call': None,
-                    'climate_sentence_ratio': None,
-                    'management_sentences': None,
-                    'qa_sentences': None,
-                    'matched_transcript_file': None
-                })
-                
-                enhanced_data.append(enhanced_transcript)
-        
-        enhanced_snippet_data.append({
-            'file': snippet_file,
-            'data': enhanced_data
-        })
-    
-    match_rate = total_matches / total_transcripts if total_transcripts > 0 else 0
-    logger.info(f"📊 Match statistics: {total_matches}/{total_transcripts} ({match_rate:.1%}) transcripts matched")
-    
-    return enhanced_snippet_data
+    return enhanced
 
 
-def save_enhanced_climate_snippets(enhanced_data: List[Dict], 
-                                 output_path: Path, 
-                                 stock_index: str) -> None:
-    """
-    Save enhanced climate snippet data with sentence ratios.
-    
-    Args:
-        enhanced_data: List of enhanced snippet file data
-        output_path: Output path for enhanced files
-        stock_index: Stock index name
-    """
+def save_enhanced_data(enhanced_data: List[Dict], output_path: Path, stock_index: str, file_number: str):
+    """Save enhanced data to file."""
     logger = logging.getLogger(__name__)
     
     output_dir = output_path / stock_index
     output_dir.mkdir(parents=True, exist_ok=True)
     
-    for file_data in enhanced_data:
-        original_file = file_data['file']
-        data = file_data['data']
-        
-        # Create output filename
-        output_filename = f"enhanced_{original_file.name}"
-        output_file = output_dir / output_filename
-        
-        # Save enhanced data
-        with open(output_file, 'w', encoding='utf-8') as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
-        
-        logger.info(f"💾 Saved enhanced file: {output_file}")
+    output_file = output_dir / f"enhanced_climate_segments_{file_number}.json"
     
-    # Create summary statistics
-    summary_stats = calculate_summary_statistics(enhanced_data)
-    summary_file = output_dir / 'sentence_ratio_summary.json'
+    with open(output_file, 'w', encoding='utf-8') as f:
+        json.dump(enhanced_data, f, indent=2, ensure_ascii=False)
     
-    with open(summary_file, 'w', encoding='utf-8') as f:
-        json.dump(summary_stats, f, indent=2, default=str)
-    
-    logger.info(f"📊 Summary statistics saved: {summary_file}")
+    logger.info(f"💾 Saved: {output_file}")
+    print(f"💾 Saved: {output_file.name}")
 
 
-def calculate_summary_statistics(enhanced_data: List[Dict]) -> Dict:
-    """Calculate summary statistics for sentence ratios."""
+def calculate_summary_stats(output_path: Path, stock_index: str) -> Optional[Dict]:
+    """Calculate summary statistics from all enhanced files."""
+    logger = logging.getLogger(__name__)
+    
+    output_dir = output_path / stock_index
+    enhanced_files = list(output_dir.glob("enhanced_climate_segments_*.json"))
+    
+    if not enhanced_files:
+        logger.warning("No enhanced files found for summary")
+        return None
     
     all_ratios = []
     total_climate_sentences = 0
     total_call_sentences = 0
-    transcripts_with_ratios = 0
-    transcripts_total = 0
+    matched_transcripts = 0
+    total_transcripts = 0
     
-    for file_data in enhanced_data:
-        for transcript in file_data['data']:
-            transcripts_total += 1
+    for enhanced_file in enhanced_files:
+        with open(enhanced_file, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        
+        for transcript in data:
+            total_transcripts += 1
             
             climate_sentences = transcript.get('climate_sentence_count', 0)
             total_sentences = transcript.get('total_sentences_in_call')
@@ -489,47 +304,40 @@ def calculate_summary_statistics(enhanced_data: List[Dict]) -> Dict:
             if total_sentences is not None and ratio is not None:
                 total_call_sentences += total_sentences
                 all_ratios.append(ratio)
-                transcripts_with_ratios += 1
+                matched_transcripts += 1
     
+    # Calculate statistics
     import numpy as np
     
     summary = {
-        'total_transcripts': transcripts_total,
-        'transcripts_with_sentence_ratios': transcripts_with_ratios,
-        'match_rate': transcripts_with_ratios / transcripts_total if transcripts_total > 0 else 0,
+        'total_transcripts': total_transcripts,
+        'matched_transcripts': matched_transcripts,
+        'match_rate': matched_transcripts / total_transcripts if total_transcripts > 0 else 0,
         'total_climate_sentences': total_climate_sentences,
         'total_call_sentences': total_call_sentences,
-        'sentence_ratio_statistics': {
+        'sentence_ratio_stats': {
             'mean': float(np.mean(all_ratios)) if all_ratios else 0,
             'median': float(np.median(all_ratios)) if all_ratios else 0,
             'std': float(np.std(all_ratios)) if all_ratios else 0,
             'min': float(np.min(all_ratios)) if all_ratios else 0,
             'max': float(np.max(all_ratios)) if all_ratios else 0,
             'p25': float(np.percentile(all_ratios, 25)) if all_ratios else 0,
-            'p75': float(np.percentile(all_ratios, 75)) if all_ratios else 0,
-            'p90': float(np.percentile(all_ratios, 90)) if all_ratios else 0,
-            'p99': float(np.percentile(all_ratios, 99)) if all_ratios else 0
+            'p75': float(np.percentile(all_ratios, 75)) if all_ratios else 0
         }
     }
     
+    # Save summary
+    summary_file = output_dir / 'sentence_ratio_summary.json'
+    with open(summary_file, 'w', encoding='utf-8') as f:
+        json.dump(summary, f, indent=2, default=str)
+    
+    logger.info(f"📊 Summary saved: {summary_file}")
     return summary
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Calculate sentence ratios between climate snippets and full earnings calls',
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-    # Calculate ratios for both indices
-    python scripts/3.5_calculate_sentence_ratios.py --all
-    
-    # Calculate for SP500 only
-    python scripts/3.5_calculate_sentence_ratios.py SP500
-    
-    # Use custom paths
-    python scripts/3.5_calculate_sentence_ratios.py STOXX600 --raw-transcripts-path /custom/raw --climate-snippets-path /custom/climate
-        """
+        description='Calculate sentence ratios between climate snippets and structured earnings calls'
     )
     
     parser.add_argument(
@@ -546,16 +354,16 @@ Examples:
     )
     
     parser.add_argument(
-        '--raw-transcripts-path',
+        '--structured-path',
         type=Path,
-        default=Path("/Users/marleendejonge/Desktop/ECC-data-generation/data/processed/raw_jsons"),
-        help='Path to raw transcript JSON files'
+        default=Path("data/processed/structured_jsons"),
+        help='Path to structured transcript files'
     )
     
     parser.add_argument(
-        '--climate-snippets-path',
+        '--climate-path',
         type=Path,
-        default=Path("/Users/marleendejonge/Desktop/ECC-data-generation/data/climate_paragraphs"),
+        default=Path("data/climate_paragraphs"),
         help='Path to climate snippet files'
     )
     
@@ -563,7 +371,7 @@ Examples:
         '--output-path',
         type=Path,
         default=Path("outputs/enhanced_climate_snippets"),
-        help='Output path for enhanced climate snippets'
+        help='Output path for enhanced files'
     )
     
     parser.add_argument(
@@ -581,81 +389,95 @@ Examples:
     if args.all and args.stock_index:
         parser.error("Cannot specify both --all and a specific stock index")
     
-    # Setup logging
+    # Setup
     setup_logging(args.verbose)
     logger = logging.getLogger(__name__)
     
-    # Determine stock indices to process
     stock_indices = SUPPORTED_INDICES if args.all else [args.stock_index]
     
-    print("📊 Climate Sentence Ratio Calculation")
+    print("🧮 Climate Sentence Ratio Calculator")
     print("=" * 50)
     print(f"Stock indices: {', '.join(stock_indices)}")
-    print(f"Raw transcripts path: {args.raw_transcripts_path}")
-    print(f"Climate snippets path: {args.climate_snippets_path}")
-    print(f"Output path: {args.output_path}")
+    print(f"Structured transcripts: {args.structured_path}")
+    print(f"Climate snippets: {args.climate_path}")
+    print(f"Output: {args.output_path}")
     
     try:
         for stock_index in stock_indices:
-            print(f"\n{'='*60}")
+            print(f"\n{'='*50}")
             print(f"PROCESSING {stock_index}")
-            print(f"{'='*60}")
+            print(f"{'='*50}")
             
-            # Load full transcripts
-            print(f"📥 Loading full transcripts for {stock_index}...")
-            try:
-                full_transcripts = load_full_transcripts(args.raw_transcripts_path, stock_index)
-                print(f"✅ Loaded {len(full_transcripts)} full transcripts")
-            except Exception as e:
-                print(f"❌ Error loading full transcripts for {stock_index}: {e}")
+            structured_path = args.structured_path / stock_index
+            climate_path = args.climate_path / stock_index
+            
+            # Validate paths
+            if not structured_path.exists():
+                print(f"❌ Structured path not found: {structured_path}")
+                continue
+            if not climate_path.exists():
+                print(f"❌ Climate path not found: {climate_path}")
                 continue
             
-            # Load climate snippets
-            print(f"🌍 Loading climate snippets for {stock_index}...")
+            # Find file pairs
+            print("🔍 Finding file pairs...")
             try:
-                climate_snippets = load_climate_snippets(args.climate_snippets_path, stock_index)
-                total_climate_transcripts = sum(len(data['data']) for data in climate_snippets)
-                print(f"✅ Loaded {total_climate_transcripts} climate transcripts from {len(climate_snippets)} files")
+                pairs = find_file_pairs(structured_path, climate_path, stock_index)
+                if not pairs:
+                    print(f"⚠️ No file pairs found for {stock_index}")
+                    continue
+                print(f"✅ Found {len(pairs)} file pairs")
             except Exception as e:
-                print(f"❌ Error loading climate snippets for {stock_index}: {e}")
+                print(f"❌ Error finding pairs: {e}")
                 continue
             
-            # Calculate sentence ratios
-            print(f"🔢 Calculating sentence ratios...")
-            enhanced_data = calculate_sentence_ratios(climate_snippets, full_transcripts, stock_index)
+            # Process each pair
+            for i, (climate_file, structured_file) in enumerate(pairs, 1):
+                print(f"\n📁 Processing pair {i}/{len(pairs)}")
+                print(f"   Climate: {climate_file.name}")
+                print(f"   Structured: {structured_file.name}")
+                
+                try:
+                    enhanced_data = process_file_pair(climate_file, structured_file)
+                    
+                    # Extract file number for output naming
+                    climate_match = re.search(r'(\d+)', climate_file.name)
+                    file_number = climate_match.group(1) if climate_match else str(i)
+                    
+                    save_enhanced_data(enhanced_data, args.output_path, stock_index, file_number)
+                    
+                    # Memory cleanup
+                    del enhanced_data
+                    gc.collect()
+                    
+                    print(f"✅ Completed pair {i}/{len(pairs)}")
+                    
+                except Exception as e:
+                    print(f"❌ Error processing pair {i}: {e}")
+                    logger.error(f"Error processing pair {i}: {e}")
+                    continue
             
-            # Save enhanced data
-            print(f"💾 Saving enhanced climate snippets...")
-            save_enhanced_climate_snippets(enhanced_data, args.output_path, stock_index)
+            # Calculate summary
+            print("\n📊 Calculating summary statistics...")
+            summary = calculate_summary_stats(args.output_path, stock_index)
             
-            print(f"✅ {stock_index} completed successfully!")
+            if summary:
+                print(f"✅ {stock_index} completed!")
+                print(f"📈 Match rate: {summary['match_rate']:.1%}")
+                print(f"📊 Total transcripts: {summary['total_transcripts']}")
+                print(f"🎯 Average climate ratio: {summary['sentence_ratio_stats']['mean']:.3%}")
             
-            # Clean up memory
-            del full_transcripts, climate_snippets, enhanced_data
-            gc.collect()
-    
     except KeyboardInterrupt:
-        print("\n🛑 Process interrupted by user")
-        return
+        print("\n🛑 Interrupted by user")
     except Exception as e:
-        logger.error(f"❌ Error during processing: {e}")
         print(f"❌ Error: {e}")
+        logger.error(f"Main error: {e}")
         if args.verbose:
             import traceback
             traceback.print_exc()
-        return
     
-    print(f"\n✅ Sentence ratio calculation completed!")
-    print(f"📁 Enhanced climate snippets saved to: {args.output_path}")
-    print(f"\nOutput structure:")
-    print(f"  outputs/enhanced_climate_snippets/")
-    print(f"  ├── SP500/")
-    print(f"  │   ├── enhanced_climate_segments_1.json")
-    print(f"  │   ├── enhanced_climate_segments_2.json")
-    print(f"  │   └── sentence_ratio_summary.json")
-    print(f"  └── STOXX600/")
-    print(f"      ├── enhanced_climate_segments_1.json")
-    print(f"      └── sentence_ratio_summary.json")
+    print(f"\n🎉 Processing complete!")
+    print(f"📁 Results saved to: {args.output_path}")
 
 
 if __name__ == "__main__":

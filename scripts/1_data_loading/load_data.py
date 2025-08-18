@@ -5,6 +5,8 @@ Memory-efficient main pipeline for processing raw transcript PDFs to structured 
 This version includes memory monitoring, automatic cleanup, and streaming processing
 to handle large datasets without running out of memory.
 
+Modified to save directly to data/processed/ folders without duplicates.
+
 Author: Marleen de Jonge
 Date: 2025
 """
@@ -18,14 +20,14 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from src import config
-from src.data.load_transcripts import find_and_delete_duplicate_filenames
-from src.data.pdf_processing import extract_transcripts_memory_efficient, get_optimal_batch_sizes
-from src.data.parse_data import (
+from src.data_pipeline.load_transcripts import find_and_delete_duplicate_filenames
+from src.data_pipeline.pdf_processing import extract_transcripts_memory_efficient, get_optimal_batch_sizes
+from src.data_pipeline.parse_data import (
     structure_all_transcripts_from_parts_efficient, 
     auto_configure_processing,
     estimate_memory_requirements
 )
-from src.data.parser import process_all_pdfs_in_directory
+from src.data_pipeline.parser import process_all_pdfs_in_directory
 
 
 def setup_logging(level: str = None) -> None:
@@ -61,6 +63,39 @@ def log_system_info():
     disk = psutil.disk_usage(str(config.BASE_DIR))
     logger.info(f"💾 Disk Space: {disk.free / (1024**3):.1f}GB free of "
                f"{disk.total / (1024**3):.1f}GB total")
+
+
+def get_data_processed_paths(stock_index: str) -> tuple:
+    """
+    Get paths for data/processed/ folders.
+    
+    Args:
+        stock_index: Stock index (e.g., 'SP500', 'STOXX600')
+        
+    Returns:
+        Tuple of (raw_jsons_path, structured_jsons_path)
+    """
+    base_dir = Path(__file__).parent.parent.parent
+    data_processed = base_dir / "data" / "processed"
+    
+    raw_jsons_path = data_processed / "raw_jsons" / stock_index
+    structured_jsons_path = data_processed / "structured_jsons" / stock_index
+    
+    return raw_jsons_path, structured_jsons_path
+
+
+def create_processed_directories(stock_index: str) -> None:
+    """Create data/processed/ directory structure."""
+    raw_jsons_path, structured_jsons_path = get_data_processed_paths(stock_index)
+    
+    # Create directories
+    raw_jsons_path.mkdir(parents=True, exist_ok=True)
+    structured_jsons_path.mkdir(parents=True, exist_ok=True)
+    
+    logger = logging.getLogger(__name__)
+    logger.info(f"📁 Created directories:")
+    logger.info(f"   Raw JSONs: {raw_jsons_path}")
+    logger.info(f"   Structured JSONs: {structured_jsons_path}")
 
 
 def check_memory_requirements(stock_index: str) -> bool:
@@ -136,17 +171,18 @@ def main(stock_index: str, force_streaming: bool = False) -> None:
     logger.info(f"Starting memory-efficient transcript processing pipeline for {stock_index}")
     
     try:
-        # Get paths from config
+        # Get input PDF folder from config
         pdf_folder = config.get_pdf_folder(stock_index)
-        raw_json_folder = config.get_raw_json_folder(stock_index)
-        structured_json_folder = config.get_structured_json_folder(stock_index)
-        final_output_folder = config.get_final_output_folder(stock_index)
+        
+        # Get output paths for data/processed/ structure
+        raw_jsons_folder, structured_jsons_folder = get_data_processed_paths(stock_index)
         
         # Create output directories
-        config.create_output_directories(stock_index)
+        create_processed_directories(stock_index)
         
         logger.info(f"Processing PDFs from: {pdf_folder}")
-        logger.info(f"Output will be saved to: {final_output_folder}")
+        logger.info(f"Raw JSONs will be saved to: {raw_jsons_folder}")
+        logger.info(f"Structured JSONs will be saved to: {structured_jsons_folder}")
         
         # Get optimal batch sizes based on available memory
         if config.AUTO_ADJUST_MEMORY:
@@ -174,7 +210,7 @@ def main(stock_index: str, force_streaming: bool = False) -> None:
         
         # Step 2: Extract transcripts from PDFs (memory-efficient)
         logger.info("Step 2: Extracting transcripts from PDFs (memory-efficient)...")
-        output_file_base = raw_json_folder / "transcripts_data"
+        output_file_base = raw_jsons_folder / "transcripts_data"
         
         # Adjust number of parts based on memory
         base_num_parts = config.DEFAULT_NUM_PARTS
@@ -197,8 +233,8 @@ def main(stock_index: str, force_streaming: bool = False) -> None:
         logger.info("Step 3: Structuring transcripts (memory-efficient)...")
         
         # Auto-configure processing based on the raw JSON files
-        if raw_json_folder.exists():
-            processing_config = auto_configure_processing(str(raw_json_folder))
+        if raw_jsons_folder.exists():
+            processing_config = auto_configure_processing(str(raw_jsons_folder))
             logger.info(f"📊 Processing analysis: {processing_config['file_analysis']}")
             
             if processing_config['recommendations']:
@@ -215,21 +251,21 @@ def main(stock_index: str, force_streaming: bool = False) -> None:
                 logger.info("🌊 Using streaming processing for large datasets")
                 from src.data.memory_efficient_parse_data import process_transcripts_in_streaming_chunks
                 process_transcripts_in_streaming_chunks(
-                    input_folder=str(raw_json_folder),
-                    output_folder=str(structured_json_folder),
+                    input_folder=str(raw_jsons_folder),
+                    output_folder=str(structured_jsons_folder),
                     chunk_size=processing_config.get('chunk_size', config.MAX_JSON_ITEMS_IN_MEMORY)
                 )
             else:
                 logger.info("⚡ Using efficient batch processing")
                 structure_all_transcripts_from_parts_efficient(
-                    input_folder=str(raw_json_folder),
-                    output_folder=str(structured_json_folder)
+                    input_folder=str(raw_jsons_folder),
+                    output_folder=str(structured_jsons_folder)
                 )
         else:
             logger.warning("Raw JSON folder not found, using standard processing")
             structure_all_transcripts_from_parts_efficient(
-                input_folder=str(raw_json_folder),
-                output_folder=str(structured_json_folder)
+                input_folder=str(raw_jsons_folder),
+                output_folder=str(structured_jsons_folder)
             )
         
         logger.info("✅ Memory-efficient transcript structuring completed")
@@ -237,21 +273,11 @@ def main(stock_index: str, force_streaming: bool = False) -> None:
         # Step 4: Process transcripts for analysis
         logger.info("Step 4: Processing transcripts for metadata extraction...")
         process_all_pdfs_in_directory(
-            folder_path=str(structured_json_folder),
+            folder_path=str(structured_jsons_folder),
             pdf_folder=str(pdf_folder), 
             index=stock_index
         )
         logger.info("✅ Transcript processing completed")
-        
-        # Step 5: Move final results to outputs folder
-        logger.info("Step 5: Moving final results to outputs folder...")
-        import shutil
-        
-        # Copy structured JSONs to final output location
-        if structured_json_folder.exists():
-            if final_output_folder.exists():
-                shutil.rmtree(final_output_folder)
-            shutil.copytree(structured_json_folder, final_output_folder)
         
         # Final memory check
         final_memory = psutil.virtual_memory()
@@ -259,7 +285,9 @@ def main(stock_index: str, force_streaming: bool = False) -> None:
                    f"({final_memory.available / (1024**3):.1f}GB available)")
         
         logger.info(f"🎉 Memory-efficient pipeline completed successfully for {stock_index}")
-        logger.info(f"📁 Final structured JSONs available at: {final_output_folder}")
+        logger.info(f"📁 Raw JSONs saved to: {raw_jsons_folder}")
+        logger.info(f"📁 Structured JSONs saved to: {structured_jsons_folder}")
+        logger.info("✅ No duplicate folders created - files are in their final locations")
         
     except Exception as e:
         logger.error(f"Pipeline failed with error: {str(e)}", exc_info=True)

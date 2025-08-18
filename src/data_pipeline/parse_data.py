@@ -23,7 +23,7 @@ sys.path.append(str(Path(__file__).parent.parent.parent))
 
 import src.config as config
 from src.data.streaming_json_utils import MemoryEfficientJSONProcessor, stream_json_array
-from src.data.pdf_processing import MemoryMonitor
+from src.data_pipeline.pdf_processing import MemoryMonitor
 
 logger = logging.getLogger(__name__)
 

@@ -1,0 +1,300 @@
+# config/queries.yaml
+# Central configuration for all semantic search queries, thresholds, and settings
+# Author: Marleen de Jonge
+# Date: 2025
+
+# =============================================================================
+# MODEL CONFIGURATIONS
+# =============================================================================
+models:
+  sentence_transformer: "sentence-transformers/all-mpnet-base-v2"
+  climate_classifier: "climatebert/distilroberta-base-climate-detector"
+
+# =============================================================================
+# DEFAULT SIMILARITY THRESHOLDS
+# =============================================================================
+default_thresholds:
+  high_precision: 0.50    # Conservative threshold for high-confidence matches
+  balanced: 0.45          # Balanced precision/recall (recommended)
+  high_recall: 0.40       # More inclusive threshold
+  experimental: 0.35      # For exploratory analysis
+
+# =============================================================================
+# CLIMATE POLICY ANALYSIS QUERIES
+# =============================================================================
+policies:
+  paris_agreement:
+    queries:
+      - "Paris Agreement COP21 international climate accord global warming 1.5 degrees"
+      - "Paris climate agreement commitments nationally determined contributions NDCs"
+      - "COP21 Paris accord climate targets emission reduction pledges"
+      - "international climate agreement Paris framework temperature goals"
+      - "global climate deal Paris implementation compliance"
+      - "Paris Agreement withdrawal re-entry climate commitments"
+      - "climate accord Paris international cooperation climate finance"
+      - "Paris Agreement Article 6 carbon markets international cooperation"
+    threshold: 0.45
+    description: "Paris Agreement and COP21 related climate policy discussions"
+    
+  eu_green_deal:
+    queries:
+      - "European Green Deal EU climate law fit for 55 package"
+      - "Green Deal European climate policy EU taxonomy regulation"
+      - "EU Green Deal climate neutrality 2050 European climate law"
+      - "European Green Deal sustainable finance disclosure regulation SFDR"
+      - "Green Deal investment plan Europe climate transition fund"
+      - "EU taxonomy green investment sustainable finance classification"
+      - "European climate law climate target plan 2030 emissions reduction"
+      - "Fit for 55 package carbon border adjustment CBAM"
+    threshold: 0.45
+    description: "EU Green Deal and related European climate policies"
+    
+  us_ira:
+    queries:
+      - "Inflation Reduction Act IRA climate provisions clean energy tax credits"
+      - "IRA Inflation Reduction Act renewable energy incentives climate investments"
+      - "US climate legislation Inflation Reduction Act clean energy subsidies"
+      - "Biden climate bill IRA tax credits clean energy manufacturing"
+      - "Inflation Reduction Act clean technology domestic production incentives"
+      - "IRA climate investment American manufacturing green energy jobs"
+      - "US domestic climate policy IRA clean energy transition"
+      - "Inflation Reduction Act electric vehicle tax credits clean energy"
+    threshold: 0.40
+    description: "US Inflation Reduction Act climate provisions and incentives"
+    
+  cop_meetings:
+    queries:
+      - "COP climate conference international negotiations UNFCCC"
+      - "Conference of Parties climate summit global negotiations"
+      - "COP26 Glasgow climate conference net zero commitments"
+      - "COP27 Egypt climate summit loss and damage fund"
+      - "COP28 Dubai climate conference fossil fuel transition"
+      - "international climate negotiations COP global climate action"
+      - "climate summit COP presidency international climate diplomacy"
+      - "UNFCCC COP climate conference global climate governance"
+    threshold: 0.45
+    description: "UN Climate Conferences (COP meetings) and international negotiations"
+
+  carbon_pricing:
+    queries:
+      - "carbon pricing carbon tax carbon credits emissions trading"
+      - "cap and trade carbon market carbon pricing mechanisms"
+      - "EU ETS European emissions trading system carbon permits"
+      - "carbon fee carbon levy carbon pricing policies regulations"
+      - "internal carbon price shadow price carbon pricing strategy"
+      - "carbon border adjustment CBAM carbon leakage protection"
+      - "regional carbon markets linking international carbon pricing"
+      - "carbon tax policy design carbon pricing implementation"
+    threshold: 0.40
+    description: "Carbon pricing mechanisms and policies"
+
+  climate_disclosure:
+    queries:
+      - "climate risk disclosure ESG reporting TCFD recommendations"
+      - "TCFD climate scenario analysis physical transition risks"
+      - "sustainability reporting framework climate disclosure requirements"
+      - "carbon footprint disclosure scope 1 2 3 emissions"
+      - "climate governance reporting climate risk management"
+      - "ESG disclosure climate targets net zero commitments"
+      - "climate-related financial disclosures TCFD implementation"
+      - "mandatory climate disclosure regulations SEC climate rules"
+    threshold: 0.40
+    description: "Climate disclosure requirements and frameworks"
+
+# =============================================================================
+# CLIMATE RISK ANALYSIS QUERIES
+# =============================================================================
+risk_analysis:
+  physical_risks:
+    acute_risks:
+      queries:
+        - "extreme weather climate physical risk operational disruption supply chain"
+        - "hurricanes floods droughts wildfires extreme weather events business operations"
+        - "climate-related natural disasters physical infrastructure damage"
+        - "severe weather operational resilience climate adaptation physical assets"
+        - "acute physical risks climate hazards business continuity"
+        - "extreme weather supply chain disruption operational impacts"
+        - "natural disasters climate change physical infrastructure"
+        - "weather-related operational risks climate physical impacts"
+      threshold: 0.40
+      description: "Acute physical climate risks from extreme weather events"
+      
+    chronic_risks:
+      queries:
+        - "rising sea levels temperature changes precipitation patterns long-term climate"
+        - "chronic physical risks climate change operational locations infrastructure"
+        - "long-term climate trends physical environment changing weather patterns"
+        - "climate change adaptation infrastructure resilience chronic physical risks"
+        - "sea level rise coastal operations long-term climate impacts"
+        - "temperature increases heat stress operational efficiency"
+        - "changing precipitation water availability drought risk"
+        - "chronic climate change long-term business operations"
+      threshold: 0.40
+      description: "Chronic physical climate risks from long-term changes"
+      
+  transition_risks:
+    policy_regulatory:
+      queries:
+        - "climate regulations carbon pricing policy transition risk regulatory changes"
+        - "climate policy regulatory compliance environmental regulations transition costs"
+        - "carbon regulations climate legislation regulatory transition risk"
+        - "environmental policy compliance climate regulatory landscape transition"
+        - "regulatory transition risks climate policy uncertainty"
+        - "climate regulation compliance costs policy implementation"
+        - "environmental regulatory changes climate transition policy"
+        - "climate policy development regulatory compliance transition"
+      threshold: 0.40
+      description: "Policy and regulatory transition risks"
+      
+    technology:
+      queries:
+        - "clean technology renewable energy transition technological disruption"
+        - "energy transition technology obsolescence stranded assets technological risk"
+        - "low-carbon technology renewable energy competitive disadvantage technology transition"
+        - "clean tech innovation energy transformation technological transition risk"
+        - "technological disruption clean energy competitiveness"
+        - "energy technology transition renewable energy adoption"
+        - "clean technology development technological obsolescence"
+        - "technology transition risks clean energy innovation"
+      threshold: 0.40
+      description: "Technology transition risks and disruption"
+      
+    market:
+      queries:
+        - "consumer preferences demand shift sustainable products market transition"
+        - "market transition risk customer behavior sustainable products reputation"
+        - "changing consumer demand climate-conscious consumers market shifts"
+        - "sustainable products market transition brand reputation climate preferences"
+        - "market demand sustainable products green consumer preferences"
+        - "climate-conscious consumers market transition reputation risk"
+        - "sustainable market trends consumer behavior climate awareness"
+        - "green products market demand climate consumer preferences"
+      threshold: 0.40
+      description: "Market transition risks from changing consumer preferences"
+
+# =============================================================================
+# CLIMATE OPPORTUNITIES ANALYSIS
+# =============================================================================
+opportunities:
+  clean_energy:
+    queries:
+      - "renewable energy clean energy investments solar wind power"
+      - "clean energy solutions sustainable energy renewable power generation"
+      - "green energy investments renewable energy projects clean power"
+      - "energy transition renewable investments clean energy opportunities"
+      - "solar wind renewable energy clean energy development"
+      - "clean energy infrastructure renewable energy expansion"
+      - "sustainable energy solutions renewable energy growth"
+      - "clean energy technology renewable energy innovation"
+    threshold: 0.40
+    description: "Clean and renewable energy opportunities"
+    
+  energy_efficiency:
+    queries:
+      - "energy efficiency improvements operational efficiency energy savings"
+      - "energy efficient technologies energy conservation operational optimization"
+      - "energy management efficiency programs energy reduction initiatives"
+      - "efficiency improvements energy optimization operational efficiency"
+      - "energy efficiency investments energy conservation measures"
+      - "operational energy efficiency energy management systems"
+      - "energy efficiency upgrades energy conservation opportunities"
+      - "energy optimization efficiency technologies energy management"
+    threshold: 0.40
+    description: "Energy efficiency and conservation opportunities"
+    
+  sustainable_products:
+    queries:
+      - "sustainable products green products eco-friendly sustainable innovation"
+      - "environmentally friendly products sustainable product development"
+      - "green product lines sustainable solutions environmental products"
+      - "sustainable innovation eco-friendly products green technology products"
+      - "circular economy sustainable product design"
+      - "green products sustainable manufacturing eco-friendly solutions"
+      - "sustainable product innovation green technology development"
+      - "eco-friendly product development sustainable solutions"
+    threshold: 0.40
+    description: "Sustainable product development and innovation"
+    
+  green_finance:
+    queries:
+      - "green bonds sustainable finance ESG investments climate finance"
+      - "sustainable financing green loans ESG funding climate investments"
+      - "green financing sustainable debt environmental finance ESG capital"
+      - "climate finance green bonds sustainable investment ESG financing"
+      - "sustainable banking green investment ESG finance"
+      - "green bonds issuance sustainable finance markets"
+      - "ESG investing sustainable finance climate investment"
+      - "green finance sustainable investment climate financing"
+    threshold: 0.40
+    description: "Green financing and sustainable investment opportunities"
+
+  circular_economy:
+    queries:
+      - "circular economy waste reduction recycling sustainable business models"
+      - "circular business models waste management resource efficiency"
+      - "recycling circular economy sustainable resource management"
+      - "waste reduction circular economy resource optimization"
+      - "circular economy principles sustainable manufacturing"
+      - "resource efficiency circular economy waste minimization"
+      - "sustainable waste management circular economy solutions"
+      - "circular economy transition sustainable resource use"
+    threshold: 0.40
+    description: "Circular economy and resource efficiency opportunities"
+
+# =============================================================================
+# ANALYSIS SETTINGS
+# =============================================================================
+analysis_settings:
+  time_series:
+    smoothing_window: 3           # months for moving average
+    min_data_points: 5            # minimum observations for reliable trends
+    default_frequency: "quarter"  # quarterly, monthly, yearly, daily
+    
+  aggregation:
+    min_snippets_per_period: 1    # minimum snippets to include period
+    aggregation_method: "sum"     # sum, mean, max for mention counts
+    
+  search_parameters:
+    default_top_k: 2000          # maximum results per query
+    max_queries_per_topic: 8     # maximum queries to prevent overloading
+    
+  export:
+    include_metadata: true
+    date_format: "%Y-%m-%d"
+    decimal_places: 4
+    export_formats: ["csv", "json"]
+
+# =============================================================================
+# OUTPUT PATHS
+# =============================================================================
+output_paths:
+  results: "outputs/analysis_results"
+  visualizations: "outputs/visualizations"  
+  exports: "outputs/exports"
+  reports: "outputs/reports"
+  logs: "logs"
+
+# =============================================================================
+# INDEX SETTINGS
+# =============================================================================
+index_settings:
+  default_index_path: "data/semantic_indexes/combined"
+  model_compatibility_check: true
+  validation_on_load: true
+
+# =============================================================================
+# VALIDATION SETTINGS
+# =============================================================================
+validation:
+  min_similarity_score: 0.30     # absolute minimum threshold
+  max_similarity_score: 1.00     # maximum possible threshold
+  required_query_fields: ["queries", "threshold", "description"]
+  
+# =============================================================================
+# EXPERIMENTAL FEATURES
+# =============================================================================
+experimental:
+  adaptive_thresholds: false      # automatically adjust thresholds based on results
+  cross_policy_analysis: true     # enable cross-policy comparative analysis
+  sentiment_analysis: false       # analyze sentiment of climate discussions
+  temporal_attention_decay: false # weight recent mentions more heavily

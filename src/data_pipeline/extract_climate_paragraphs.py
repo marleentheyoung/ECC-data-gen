@@ -28,6 +28,7 @@ import psutil
 
 # Add src to path for imports
 sys.path.append(str(Path(__file__).parent.parent.parent))
+
 from src.config import BASE_DIR, SUPPORTED_INDICES
 
 

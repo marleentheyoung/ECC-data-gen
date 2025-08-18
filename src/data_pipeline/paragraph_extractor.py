@@ -262,7 +262,6 @@ def preview_paragraphs(structured_json_folder: Path, num_examples: int = 5) -> L
     
     return examples
 
-
 if __name__ == "__main__":
     # Test paragraph extraction
     logging.basicConfig(level=logging.INFO)

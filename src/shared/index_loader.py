@@ -13,6 +13,7 @@ import json
 import logging
 from pathlib import Path
 from typing import Dict, Any, TYPE_CHECKING
+import sys
 
 try:
     from sentence_transformers import SentenceTransformer
@@ -21,13 +22,16 @@ try:
 except ImportError as e:
     raise ImportError(f"Required packages not installed: {e}")
 
+# Add src to path for imports
+sys.path.append(str(Path(__file__).parent))
+
 # Import climate snippet class
 try:
-    from build_semantic_index import ClimateSnippet
+    from data_pipeline.build_semantic_index import ClimateSnippet
 except ImportError:
     # Use the fallback from base_searcher
     if TYPE_CHECKING:
-        from .base_searcher import ClimateSnippet
+        from analysis_pipeline.base_searcher import ClimateSnippet
 
 
 class IndexLoader:

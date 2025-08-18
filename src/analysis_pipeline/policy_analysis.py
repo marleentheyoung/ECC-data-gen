@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """
-Paris Agreement Attention Analysis
+Climate Policy Attention Analysis
 
-Creates unnormalized time series of Paris Agreement attention that can be
+Creates unnormalized time series of climate policy attention that can be
 normalized later using total sentences per period data.
 
 Usage:
-    python paris_agreement_analysis.py
-    python paris_agreement_analysis.py --threshold 0.40 --freq Y
-    python paris_agreement_analysis.py --market SP500 --start-date 2015-01-01
+    python policy_analysis.py --policy paris_agreement
+    python policy_analysis.py --policy us_ira --threshold 0.40 --freq Y
+    python policy_analysis.py --policy eu_green_deal --market STOXX600
 
 Author: Marleen de Jonge
 Date: 2025
@@ -27,21 +27,23 @@ import sys
 sys.path.append(str(Path(__file__).parent))
 
 try:
-    from semantic_searcher import SemanticClimateSearcher
+    from base_searcher import SemanticClimateSearcher
 except ImportError:
     print("❌ Could not import SemanticClimateSearcher")
     print("Make sure semantic_searcher.py is in the same directory")
     sys.exit(1)
 
 
-def create_paris_agreement_timeseries(index_path: str, 
-                                     threshold: float = 0.45,
-                                     start_date: str = None,
-                                     end_date: str = None,
-                                     freq: str = 'Q') -> pd.DataFrame:
-    """Create Paris Agreement attention time series."""
+def create_policy_timeseries(index_path: str, 
+                            policy: str = 'paris_agreement',
+                            threshold: float = 0.45,
+                            start_date: str = None,
+                            end_date: str = None,
+                            freq: str = 'Q') -> pd.DataFrame:
+    """Create climate policy attention time series."""
     
-    print(f"🔍 Analyzing Paris Agreement attention with threshold {threshold}")
+    policy_display = policy.replace('_', ' ').title()
+    print(f"🔍 Analyzing {policy_display} attention with threshold {threshold}")
     print(f"📊 Using index: {index_path}")
     
     # Load searcher
@@ -54,9 +56,9 @@ def create_paris_agreement_timeseries(index_path: str,
     print(f"📅 Date range: {stats['year_range']}")
     print()
     
-    # Create Paris Agreement time series
+    # Create policy time series
     pa_ts = searcher.create_policy_attention_timeseries(
-        policy_type='paris_agreement',
+        policy_type=policy,
         start_date=start_date,
         end_date=end_date,
         freq=freq,
@@ -64,11 +66,11 @@ def create_paris_agreement_timeseries(index_path: str,
     )
     
     if len(pa_ts) == 0:
-        print(f"❌ No Paris Agreement mentions found with threshold {threshold}")
+        print(f"❌ No {policy_display} mentions found with threshold {threshold}")
         print("💡 Try lowering the threshold (e.g., --threshold 0.35)")
         return pd.DataFrame()
     
-    print(f"✅ Found Paris Agreement mentions in {len(pa_ts)} time periods")
+    print(f"✅ Found {policy_display} mentions in {len(pa_ts)} time periods")
     
     # Add some useful columns
     pa_ts['period_label'] = pa_ts['date'].dt.strftime('%Y-Q%q' if freq == 'Q' else '%Y')
@@ -89,7 +91,7 @@ def create_paris_agreement_timeseries(index_path: str,
 
 
 def create_comparison_analysis(index_path: str, threshold: float = 0.45) -> pd.DataFrame:
-    """Compare Paris Agreement with other policies."""
+    """Compare all climate policies."""
     
     print("\n🔄 Creating comparative policy analysis...")
     
@@ -146,25 +148,57 @@ def setup_jof_style():
     })
 
 
-def create_visualizations(pa_ts: pd.DataFrame, output_dir: Path = Path("outputs")):
-    """Create JoF-style visualizations for Paris Agreement attention."""
+def create_visualizations(pa_ts: pd.DataFrame, policy: str, output_dir: Path = Path("outputs")):
+    """Create JoF-style visualizations for climate policy attention."""
     
     output_dir.mkdir(parents=True, exist_ok=True)
     setup_jof_style()
+    
+    policy_display = policy.replace('_', ' ').title()
+    
+    # Define policy-specific colors and events
+    policy_configs = {
+        'paris_agreement': {
+            'color': '#1f4e79',
+            'events': {
+                '2015-12-12': 'Paris Agreement',
+                '2017-06-01': 'US Withdrawal', 
+                '2021-01-20': 'US Re-entry'
+            }
+        },
+        'us_ira': {
+            'color': '#c5504b',
+            'events': {
+                '2022-08-16': 'IRA Signed',
+            }
+        },
+        'eu_green_deal': {
+            'color': '#70ad47',
+            'events': {
+                '2019-12-11': 'EU Green Deal',
+            }
+        },
+        'cop_meetings': {
+            'color': '#7030a0',
+            'events': {
+                '2021-11-01': 'COP26 Glasgow',
+                '2022-11-06': 'COP27 Egypt',
+                '2023-11-30': 'COP28 Dubai'
+            }
+        }
+    }
+    
+    config = policy_configs.get(policy, {'color': '#1f4e79', 'events': {}})
     
     # 1. Main time series plot (JoF style)
     fig, ax = plt.subplots(figsize=(10, 6))
     
     # Main time series line
     ax.plot(pa_ts['date'], pa_ts['count_sum'], 
-            color='#1f4e79', linewidth=2.5, marker='o', markersize=3)
+            color=config['color'], linewidth=2.5, marker='o', markersize=3)
     
     # Add key events as vertical lines
-    key_events = {
-        '2015-12-12': 'Paris Agreement',
-        '2017-06-01': 'US Withdrawal', 
-        '2021-01-20': 'US Re-entry'
-    }
+    key_events = config['events']
     
     y_max = pa_ts['count_sum'].max()
     for i, (date_str, label) in enumerate(key_events.items()):
@@ -184,9 +218,7 @@ def create_visualizations(pa_ts: pd.DataFrame, output_dir: Path = Path("outputs"
     
     # JoF style formatting
     ax.set_xlabel('Year', fontsize=15, color='black')
-    ax.set_ylabel('Paris Agreement Mentions', fontsize=14, color='black')
-    # ax.set_title('Paris Agreement Attention in Earnings Calls', 
-    #             fontsize=13, fontweight='bold', pad=15, color='black')
+    ax.set_ylabel(f'{policy_display} Mentions', fontsize=14, color='black')
     
     # Format x-axis to show years
     import matplotlib.dates as mdates
@@ -217,7 +249,7 @@ def create_visualizations(pa_ts: pd.DataFrame, output_dir: Path = Path("outputs"
     plt.tight_layout()
     
     # Save main plot
-    plot_path = output_dir / 'paris_agreement_timeseries_jof.png'
+    plot_path = output_dir / f'{policy}_timeseries_jof.png'
     plt.savefig(plot_path, dpi=300, bbox_inches='tight', 
                 facecolor='white', edgecolor='none')
     plt.show()
@@ -228,13 +260,11 @@ def create_visualizations(pa_ts: pd.DataFrame, output_dir: Path = Path("outputs"
     fig, ax = plt.subplots(figsize=(10, 6))
     
     ax.plot(pa_ts['date'], pa_ts['cumulative_mentions'], 
-            color='#70ad47', linewidth=2.5, marker='s', markersize=3)
+            color=config['color'], linewidth=2.5, marker='s', markersize=3)
     
     # JoF style formatting
     ax.set_xlabel('Year', fontsize=14, color='black')
-    ax.set_ylabel('Cumulative Paris Agreement Mentions', fontsize=14, color='black')
-    # ax.set_title('Cumulative Paris Agreement Attention', 
-    #             fontsize=13, fontweight='bold', pad=15, color='black')
+    ax.set_ylabel(f'Cumulative {policy_display} Mentions', fontsize=14, color='black')
     
     # Format axes
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
@@ -257,7 +287,7 @@ def create_visualizations(pa_ts: pd.DataFrame, output_dir: Path = Path("outputs"
     plt.tight_layout()
     
     # Save cumulative plot
-    cumulative_path = output_dir / 'paris_agreement_cumulative_jof.png'
+    cumulative_path = output_dir / f'{policy}_cumulative_jof.png'
     plt.savefig(cumulative_path, dpi=300, bbox_inches='tight',
                 facecolor='white', edgecolor='none')
     plt.show()
@@ -277,7 +307,7 @@ def create_visualizations(pa_ts: pd.DataFrame, output_dir: Path = Path("outputs"
         
         # Bar plot with JoF styling
         bars = ax.bar(yearly_data['year'], yearly_data['count_sum'], 
-                     color='#4f81bd', alpha=0.8, width=0.7)
+                     color=config['color'], alpha=0.8, width=0.7)
         
         # Add value labels on bars for key years
         for bar in bars:
@@ -289,9 +319,7 @@ def create_visualizations(pa_ts: pd.DataFrame, output_dir: Path = Path("outputs"
         
         # JoF formatting
         ax.set_xlabel('Year', fontsize=14, color='black')
-        ax.set_ylabel('Annual Paris Agreement Mentions', fontsize=14, color='black')
-        # ax.set_title('Paris Agreement Attention by Year', 
-        #             fontsize=13, fontweight='bold', pad=15, color='black')
+        ax.set_ylabel(f'Annual {policy_display} Mentions', fontsize=14, color='black')
         
         # JoF styling
         ax.spines['top'].set_visible(False)
@@ -314,7 +342,7 @@ def create_visualizations(pa_ts: pd.DataFrame, output_dir: Path = Path("outputs"
         plt.tight_layout()
         
         # Save annual plot
-        annual_path = output_dir / 'paris_agreement_annual_jof.png'
+        annual_path = output_dir / f'{policy}_annual_jof.png'
         plt.savefig(annual_path, dpi=300, bbox_inches='tight',
                     facecolor='white', edgecolor='none')
         plt.show()
@@ -403,8 +431,6 @@ def create_comparative_policy_plots(index_path: str, threshold: float = 0.45,
     # JoF formatting
     ax.set_xlabel('Year', fontsize=14, color='black')
     ax.set_ylabel('Policy Mentions in Earnings Calls', fontsize=14, color='black')
-    # ax.set_title('Climate Policy Attention Over Time', 
-    #             fontsize=15, fontweight='bold', pad=15, color='black')
     
     # Format x-axis
     import matplotlib.dates as mdates
@@ -455,8 +481,6 @@ def create_comparative_policy_plots(index_path: str, threshold: float = 0.45,
     
     # JoF formatting
     ax.set_ylabel('Total Mentions', fontsize=14, color='black')
-    # ax.set_title('Total Climate Policy Mentions', 
-    #             fontsize=16, fontweight='bold', pad=15, color='black')
     
     # JoF styling
     ax.spines['top'].set_visible(False)
@@ -487,24 +511,24 @@ def create_comparative_policy_plots(index_path: str, threshold: float = 0.45,
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Analyze Paris Agreement attention in earnings calls',
+        description='Analyze climate policy attention in earnings calls',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-    # Basic analysis with default threshold 0.45
-    python paris_agreement_analysis.py
+    # Basic Paris Agreement analysis
+    python policy_analysis.py --policy paris_agreement
     
-    # Lower threshold for more matches
-    python paris_agreement_analysis.py --threshold 0.40
+    # US IRA with lower threshold
+    python policy_analysis.py --policy us_ira --threshold 0.40
     
-    # Yearly frequency instead of quarterly
-    python paris_agreement_analysis.py --freq Y
+    # EU Green Deal with yearly frequency
+    python policy_analysis.py --policy eu_green_deal --freq Y
     
     # Specific market and date range
-    python paris_agreement_analysis.py --market SP500 --start-date 2015-01-01 --end-date 2022-12-31
+    python policy_analysis.py --policy cop_meetings --market SP500 --start-date 2020-01-01
     
     # Include comparison with other policies
-    python paris_agreement_analysis.py --comparison
+    python policy_analysis.py --policy paris_agreement --comparison
         """
     )
     
@@ -513,6 +537,13 @@ Examples:
         type=str,
         default='data/semantic_indexes/combined',
         help='Path to semantic index (default: combined index)'
+    )
+    
+    parser.add_argument(
+        '--policy',
+        choices=['paris_agreement', 'eu_green_deal', 'us_ira', 'cop_meetings'],
+        default='paris_agreement',
+        help='Policy to analyze (default: paris_agreement)'
     )
     
     parser.add_argument(
@@ -575,8 +606,10 @@ Examples:
     else:
         index_path = args.index_path
     
-    print("🌍 Paris Agreement Attention Analysis")
+    policy_display = args.policy.replace('_', ' ').title()
+    print(f"🌍 {policy_display} Attention Analysis")
     print("=" * 50)
+    print(f"Policy: {policy_display}")
     print(f"Market: {args.market}")
     print(f"Threshold: {args.threshold}")
     print(f"Frequency: {args.freq}")
@@ -585,8 +618,9 @@ Examples:
     
     try:
         # Main analysis
-        pa_ts = create_paris_agreement_timeseries(
+        pa_ts = create_policy_timeseries(
             index_path=index_path,
+            policy=args.policy,
             threshold=args.threshold,
             start_date=args.start_date,
             end_date=args.end_date,
@@ -600,9 +634,10 @@ Examples:
         output_dir = Path(args.output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
         
-        output_file = output_dir / f'paris_agreement_timeseries_{args.market}_{args.freq}.csv'
-        pa_ts.to_csv(output_file, index=False)
-        print(f"💾 Time series exported: {output_file}")
+        # Dynamic output filename
+        output_filename = output_dir / f'{args.policy}_timeseries_{args.market}_{args.freq}.csv'        
+        pa_ts.to_csv(output_filename, index=False)
+        print(f"💾 Time series exported: {output_filename}")
         
         # Comparison analysis
         if args.comparison:
@@ -618,7 +653,7 @@ Examples:
         # Create visualizations
         if not args.no_plots:
             try:
-                create_visualizations(pa_ts, output_dir)
+                create_visualizations(pa_ts, args.policy, output_dir)
                 
                 # Add comparative plots if comparison was requested
                 if args.comparison:
@@ -634,7 +669,7 @@ Examples:
         
         print(f"\n💡 Next steps for normalization:")
         print(f"   1. Create total sentences per {args.freq.lower()} file")
-        print(f"   2. Merge with this data: normalized = PA_mentions / total_sentences")
+        print(f"   2. Merge with this data: normalized = {policy_display}_mentions / total_sentences")
         print(f"   3. Use the 'count_sum' column as numerator")
         
     except FileNotFoundError as e:

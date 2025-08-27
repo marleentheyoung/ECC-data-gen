@@ -1,0 +1,22 @@
+remove_duplicate_files.py
+
+I deleted all duplicate files from stoxx600 as they are actually us firms
+
+Load_data.py
+
+data is loaded fine and placed into structured_calls jsons
+HOWEVER some tickers have various forms eventhough they belong to the same company
+
+-> now running for stoxx600
+-> after that for sp500, while running summary
+
+data_summary.py
+-> run this to see how it is looking, if there are still way too many EU tickers
+
+find_similar_tickers.py
+
+This file finds the tickers that belong to one main form and puts it in a dictionary
+
+fix_tickers.py
+
+this file uses the dictionary to change the entries, should be applied to both structured_calls and climate_

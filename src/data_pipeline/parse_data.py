@@ -22,7 +22,7 @@ from typing import Iterator, Dict, Any, List
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 import src.config as config
-from src.data.streaming_json_utils import MemoryEfficientJSONProcessor, stream_json_array
+from src.data_pipeline.streaming_json_utils import MemoryEfficientJSONProcessor, stream_json_array
 from src.data_pipeline.pdf_processing import MemoryMonitor
 
 logger = logging.getLogger(__name__)
@@ -36,7 +36,7 @@ def structure_all_transcripts_from_parts_efficient(input_folder: str, output_fol
         input_folder: Folder containing transcripts_data_part*.json files
         output_folder: Folder to save structured files
     """
-    import src.data.load_transcripts as pp
+    import src.data_pipeline.load_transcripts as pp
     
     os.makedirs(output_folder, exist_ok=True)
     input_files = sorted(glob(os.path.join(input_folder, "transcripts_data_part*.json")))
@@ -151,7 +151,7 @@ def process_transcripts_in_streaming_chunks(input_folder: str,
         output_folder: Output folder
         chunk_size: Number of items to process at once
     """
-    import src.data.load_transcripts as pp
+    import src.data_pipeline.load_transcripts as pp
     
     if chunk_size is None:
         chunk_size = config.MAX_JSON_ITEMS_IN_MEMORY

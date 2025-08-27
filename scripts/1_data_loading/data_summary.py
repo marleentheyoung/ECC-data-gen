@@ -8,13 +8,13 @@ transcript characteristics.
 
 Usage:
     # Analyze both SP500 and STOXX600
-    python scripts/1.5_data_summary.py --all
+    python scripts/1_data_loading/data_summary.py --all
     
     # Analyze SP500 only
     python scripts/1.5_data_summary.py SP500
     
     # Generate plots and detailed analysis
-    python scripts/1.5_data_summary.py --all --create-plots --detailed
+    python scripts/1_data_loading/data_summary.py --all --create-plots --detailed
     
     # Export summary to CSV
     python scripts/1.5_data_summary.py STOXX600 --export-csv
@@ -225,8 +225,22 @@ def load_and_analyze_stock_index(stock_index: str) -> Tuple[List[Dict], Dict]:
     
     for json_file in tqdm(json_files, desc=f"Analyzing {stock_index}"):
         try:
-            with open(json_file, 'r', encoding='utf-8') as f:
-                transcripts = json.load(f)
+            import time, json
+
+            def safe_load_json(path, retries=3, delay=5):
+                for i in range(retries):
+                    try:
+                        with open(path, 'r') as f:
+                            return json.load(f)
+                    except OSError as e:
+                        if e.errno == 60 and i < retries - 1:  # timeout
+                            print(f"Retry {i+1}/{retries} for {path}")
+                            time.sleep(delay)
+                        else:
+                            raise
+
+            
+            transcripts = safe_load_json(json_file)
             
             for transcript in transcripts:
                 stats = analyze_single_transcript(transcript)
@@ -408,6 +422,91 @@ def calculate_summary_statistics(transcript_stats: List[Dict], stock_index: str)
         'top_companies': top_companies_formatted,
         'yearly_progression': yearly_progression
     }
+
+
+def export_unique_firms_list(all_stats: Dict[str, Tuple[List[Dict], Dict]], 
+                            output_dir: Path) -> None:
+    """Export CSV files with unique firms for each stock index."""
+    
+    logger = logging.getLogger(__name__)
+    
+    for stock_index, stats_tuple in all_stats.items():
+        transcript_stats, summary_stats = stats_tuple
+        
+        if 'error' in summary_stats:
+            logger.warning(f"Skipping unique firms export for {stock_index} due to error: {summary_stats['error']}")
+            continue
+        
+        # Create DataFrame from transcript stats
+        df_transcripts = pd.DataFrame(transcript_stats)
+        
+        # Clean up company names and tickers
+        df_transcripts['company_name'] = df_transcripts['company_name'].fillna('Unknown')
+        df_transcripts['ticker'] = df_transcripts['ticker'].fillna('Unknown')
+        
+        # Create normalized ticker without country code extension
+        def normalize_ticker(ticker):
+            """Remove country code extension (everything after last dash)."""
+            if pd.isna(ticker) or ticker == 'Unknown':
+                return ticker
+            # Find the last dash and remove everything after it
+            if '-' in ticker:
+                return ticker.rsplit('-', 1)[0]
+            return ticker
+        
+        df_transcripts['ticker_normalized'] = df_transcripts['ticker'].apply(normalize_ticker)
+        
+        # Group by normalized ticker to combine tickers with different country codes
+        ticker_groups = df_transcripts.groupby('ticker_normalized')
+        
+        unique_firms_data = []
+        
+        for normalized_ticker, group in ticker_groups:
+            # Get the most frequent company name for this normalized ticker
+            most_common_name = group['company_name'].mode().iloc[0] if len(group['company_name'].mode()) > 0 else 'Unknown'
+            
+            # Get all original ticker variants for this normalized ticker
+            original_tickers = sorted(list(set(group['ticker'].tolist())))
+            ticker_variants = ', '.join(original_tickers)
+            
+            # Calculate statistics
+            transcript_count = len(group)
+            avg_word_count = group['total_word_count'].mean()
+            min_word_count = group['total_word_count'].min()
+            max_word_count = group['total_word_count'].max()
+            first_year = group['year'].min()
+            last_year = group['year'].max()
+            quarters_covered = sorted(list(set(group['quarter'].dropna())))
+            quarters_str = ', '.join(str(q) for q in quarters_covered if q != 'Unknown')
+            example_date = group['date'].iloc[0]
+            
+            unique_firms_data.append({
+                'ticker_normalized': normalized_ticker,
+                'ticker_variants': ticker_variants,
+                'company_name': most_common_name,
+                'transcript_count': transcript_count,
+                'avg_word_count': round(avg_word_count, 2),
+                'min_word_count': min_word_count,
+                'max_word_count': max_word_count,
+                'first_year': int(first_year) if pd.notna(first_year) else None,
+                'last_year': int(last_year) if pd.notna(last_year) else None,
+                'quarters_covered': quarters_str,
+                'example_date': example_date
+            })
+        
+        # Create DataFrame and sort by normalized ticker
+        unique_firms = pd.DataFrame(unique_firms_data)
+        unique_firms = unique_firms.sort_values('ticker_normalized')
+        
+        # Create filename
+        filename = f"unique_firms_{stock_index.lower()}.csv"
+        output_path = output_dir / filename
+        
+        # Export to CSV
+        unique_firms.to_csv(output_path, index=False)
+        
+        logger.info(f"✅ Exported {len(unique_firms)} unique firms for {stock_index} to {output_path}")
+        print(f"📊 Exported {len(unique_firms)} unique {stock_index} firms to: {filename}")
 
 
 def create_summary_report(all_stats: Dict[str, Tuple[List[Dict], Dict]], 
@@ -832,6 +931,9 @@ Examples:
     
     # Quick summary without detailed analysis
     python scripts/1.5_data_summary.py STOXX600 --quick
+    
+    # Export unique firms list for STOXX600
+    python scripts/1.5_data_summary.py STOXX600 --export-unique-firms
         """
     )
     
@@ -865,6 +967,12 @@ Examples:
         '--export-csv',
         action='store_true',
         help='Export summary statistics to CSV format'
+    )
+    
+    parser.add_argument(
+        '--export-unique-firms',
+        action='store_true',
+        help='Export CSV files with unique firms for each stock index'
     )
     
     parser.add_argument(
@@ -945,10 +1053,20 @@ Examples:
                 print(f"📤 Exporting to CSV format...")
                 export_summary_csv(all_stats, args.output_dir)
             
+            # Export unique firms if requested
+            if args.export_unique_firms:
+                print(f"📋 Exporting unique firms lists...")
+                export_unique_firms_list(all_stats, args.output_dir)
+            
             # Create visualizations if requested
             if args.create_plots:
                 print(f"📊 Creating visualizations...")
                 create_visualizations(all_stats, args.output_dir)
+        
+        # Always export unique firms if only analyzing one index and not in quick mode
+        if len(stock_indices) == 1 and not args.quick:
+            print(f"📋 Exporting unique firms list for {stock_indices[0]}...")
+            export_unique_firms_list(all_stats, args.output_dir)
         
         print(f"\n✅ Data summary completed!")
         print(f"📁 Output files saved to: {args.output_dir}")
@@ -963,6 +1081,10 @@ Examples:
             if args.export_csv:
                 print(f"  • yearly_summary.csv - Year-by-year breakdown")
                 print(f"  • firm_level_summary.csv - Firm-level aggregations")
+            
+            if args.export_unique_firms or len(stock_indices) == 1:
+                for idx in stock_indices:
+                    print(f"  • unique_firms_{idx.lower()}.csv - Unique firms list for {idx}")
             
             if args.create_plots:
                 print(f"  • plots/ - Visualization charts")
@@ -981,3 +1103,56 @@ Examples:
 
 if __name__ == "__main__":
     main()
+
+
+# import pandas as pd
+
+# df = pd.read_csv('/Users/marleendejonge/Desktop/ECC-data-generation/outputs/firm_level_panel/merged_semantic_attention_panel.csv')
+
+# # Extract year from date
+# df['year'] = pd.to_datetime(df['date']).dt.year
+
+# # 1. Unique tickers per year by region
+# ticker_coverage_by_region = df.groupby(['year', 'region'])['ISSUER_TICKER'].nunique().reset_index()
+# ticker_coverage_by_region.columns = ['Year', 'Region', 'Unique_Tickers']
+
+# # Pivot for better readability
+# ticker_pivot = ticker_coverage_by_region.pivot(index='Year', columns='Region', values='Unique_Tickers').fillna(0)
+
+# print("=== UNIQUE TICKERS PER YEAR BY REGION ===")
+# print(ticker_pivot)
+# print("\n")
+
+# # 2. Unique tickers by stock index per year
+# ticker_coverage_by_index = df.groupby(['year', 'stock_index'])['ISSUER_TICKER'].nunique().reset_index()
+# ticker_coverage_by_index.columns = ['Year', 'Stock_Index', 'Unique_Tickers']
+
+# ticker_index_pivot = ticker_coverage_by_index.pivot(index='Year', columns='Stock_Index', values='Unique_Tickers').fillna(0)
+
+# print("=== UNIQUE TICKERS PER YEAR BY STOCK INDEX ===")
+# print(ticker_index_pivot)
+# print("\n")
+
+# # 3. Summary statistics by region
+# print("=== SUMMARY BY REGION ===")
+# for region in df['region'].unique():
+#     region_data = df[df['region'] == region]
+#     total_unique_tickers = region_data['ISSUER_TICKER'].nunique()
+#     year_range = f"{region_data['year'].min()}-{region_data['year'].max()}"
+    
+#     print(f"{region}:")
+#     print(f"  - Total unique tickers: {total_unique_tickers}")
+#     print(f"  - Year range: {year_range}")
+
+# # 4. Overall totals per year
+# print("\n=== TOTAL UNIQUE TICKERS PER YEAR ===")
+# yearly_totals = df.groupby('year')['ISSUER_TICKER'].nunique()
+# for year, count in yearly_totals.items():
+#     print(f"{year}: {count}")
+
+# # 5. Dataset overview
+# print(f"\n=== DATASET OVERVIEW ===")
+# print(f"Total unique tickers: {df['ISSUER_TICKER'].nunique()}")
+# print(f"Year range: {df['year'].min()}-{df['year'].max()}")
+# print(f"Regions: {', '.join(df['region'].unique())}")
+# print(f"Stock indices: {', '.join(df['stock_index'].unique())}")

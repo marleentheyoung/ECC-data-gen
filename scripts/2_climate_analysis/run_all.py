@@ -33,20 +33,21 @@ import sys
 import traceback
 from pathlib import Path
 from datetime import datetime
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Tuple
 import pandas as pd
+import numpy as np
 
 # Add project root to path
-project_root = Path(__file__).parent.parent
+project_root = Path(__file__).parent.parent.parent
 sys.path.append(str(project_root / "src"))
 
 try:
     from analysis_pipeline.policy_analysis import PolicyAnalyzer
     from visualization.policy_plots import PolicyVisualizer
-    # Add the new analyzers
+    from analysis_pipeline.sensitivity_analyzer import SensitivityAnalyzer
     from analysis_pipeline.risk_analyzer import RiskAnalyzer
     from analysis_pipeline.opportunity_analyzer import OpportunityAnalyzer
-    from visualization.risk_opportunity_visualizer import RiskOpportunityVisualizer
+    from  visualization.risk_opportunity_visualizer import RiskOpportunityVisualizer
 except ImportError as e:
     print(f"❌ Import Error: {e}")
     print("Make sure you're running from the project root directory")
@@ -91,6 +92,10 @@ class MasterClimateRunner:
         # Create output directory structure
         self.setup_output_directories()
         
+        # Add sensitivity analyzer
+        logger.info("🔍 Initializing sensitivity analyzer...")
+        self.sensitivity_analyzer = SensitivityAnalyzer(self.index_path, self.config_path)
+        
         # Initialize components
         logger.info("🚀 Initializing analyzers...")
         self.policy_analyzer = PolicyAnalyzer(self.index_path, self.config_path)
@@ -127,6 +132,120 @@ class MasterClimateRunner:
         
         logger.info("✅ Master Climate Runner initialized")
     
+    def run_sensitivity_analysis(self, 
+                           policies: List[str] = None,
+                           threshold_range: Tuple[float, float] = (0.3, 0.7),
+                           num_points: int = 20,
+                           **kwargs) -> Dict[str, Any]:
+        """Run threshold sensitivity analysis for policies."""
+        if policies is None:
+            policies = self.all_policies
+        
+        logger.info(f"🔍 Starting sensitivity analysis for {len(policies)} policies...")
+        
+        sensitivity_results = {}
+        
+        for policy in policies:
+            try:
+                logger.info(f"📊 Running sensitivity analysis for: {policy}...")
+                
+                # Run sensitivity analysis
+                analysis_result = self.sensitivity_analyzer.threshold_sensitivity_analysis(
+                    policy_name=policy,
+                    threshold_range=threshold_range,
+                    num_points=num_points,
+                    plot=True,
+                    run_roc_validation=True,  # Enable ROC validation
+                    output_dir=self.output_dir / "sensitivity_analysis" / policy,
+                    **kwargs
+                )
+                
+                sensitivity_results[policy] = analysis_result
+                
+                # Log key findings
+                optimal_thresholds = analysis_result['optimal_thresholds']
+                logger.info(f"✅ {policy} sensitivity complete:")
+                for method, threshold in optimal_thresholds.items():
+                    if threshold:
+                        logger.info(f"   {method}: {threshold:.3f}")
+                
+            except Exception as e:
+                logger.error(f"❌ Failed sensitivity analysis for {policy}: {str(e)}")
+                continue
+        
+        # Create comparison plot across policies
+        try:
+            self._create_sensitivity_comparison_plot(sensitivity_results)
+        except Exception as e:
+            logger.error(f"❌ Failed to create sensitivity comparison: {str(e)}")
+        
+        logger.info(f"📈 Sensitivity analysis complete for {len(sensitivity_results)} policies")
+        return sensitivity_results
+
+    def _create_sensitivity_comparison_plot(self, sensitivity_results: Dict[str, Any]) -> None:
+        """Create comparison plot of optimal thresholds across policies."""
+        try:
+            import matplotlib.pyplot as plt
+            import pandas as pd
+            
+            # Extract optimal thresholds for comparison
+            comparison_data = []
+            for policy, results in sensitivity_results.items():
+                optimal_thresholds = results['optimal_thresholds']
+                for method, threshold in optimal_thresholds.items():
+                    if threshold is not None:
+                        comparison_data.append({
+                            'policy': policy.replace('_', ' ').title(),
+                            'method': method,
+                            'threshold': threshold
+                        })
+            
+            if not comparison_data:
+                logger.warning("No optimal thresholds found for comparison plot")
+                return
+            
+            df = pd.DataFrame(comparison_data)
+            
+            # Create comparison plot
+            fig, ax = plt.subplots(figsize=(12, 8))
+            
+            # Plot grouped bar chart
+            methods = df['method'].unique()
+            policies = df['policy'].unique()
+            
+            x = np.arange(len(policies))
+            width = 0.8 / len(methods)
+            
+            for i, method in enumerate(methods):
+                method_data = df[df['method'] == method]
+                thresholds = [method_data[method_data['policy'] == p]['threshold'].iloc[0] 
+                            if len(method_data[method_data['policy'] == p]) > 0 else 0 
+                            for p in policies]
+                
+                ax.bar(x + i * width, thresholds, width, 
+                    label=method.replace('_', ' ').title(), alpha=0.8)
+            
+            ax.set_xlabel('Policy')
+            ax.set_ylabel('Optimal Threshold')
+            ax.set_title('Optimal Thresholds Comparison Across Policies')
+            ax.set_xticks(x + width * (len(methods) - 1) / 2)
+            ax.set_xticklabels(policies, rotation=45, ha='right')
+            ax.legend()
+            ax.grid(True, alpha=0.3)
+            
+            plt.tight_layout()
+            
+            # Save plot
+            comparison_plot_path = self.output_dir / "sensitivity_analysis" / "threshold_comparison.png"
+            comparison_plot_path.parent.mkdir(parents=True, exist_ok=True)
+            plt.savefig(comparison_plot_path, dpi=300, bbox_inches='tight')
+            plt.close()
+            
+            logger.info(f"✅ Sensitivity comparison plot saved: {comparison_plot_path}")
+            
+        except Exception as e:
+            logger.error(f"Error creating sensitivity comparison plot: {e}")
+        
     def setup_output_directories(self) -> None:
         """Create organized output directory structure."""
         directories = [
@@ -564,15 +683,19 @@ class MasterClimateRunner:
         return report_path
      
     def run_complete_pipeline(self, 
-                             analysis_types: List[str] = None,
-                             policies: List[str] = None,
-                             **analysis_kwargs) -> Dict[str, Any]:
+                         analysis_types: List[str] = None,
+                         policies: List[str] = None,
+                         run_sensitivity: bool = False,
+                         sensitivity_config: Dict[str, Any] = None,
+                         **analysis_kwargs) -> Dict[str, Any]:
         """
         Run the complete climate analysis pipeline.
         
         Args:
             analysis_types: Types of analysis to run ['policy', 'risk', 'opportunity']
             policies: List of policies to analyze (for policy analysis)
+            run_sensitivity: Whether to run threshold sensitivity analysis
+            sensitivity_config: Configuration for sensitivity analysis
             **analysis_kwargs: Additional arguments for analyses
             
         Returns:
@@ -584,8 +707,16 @@ class MasterClimateRunner:
         if analysis_types is None:
             analysis_types = ['policy', 'risk', 'opportunity']
         
+        if sensitivity_config is None:
+            sensitivity_config = {
+                'threshold_range': (0.3, 0.6),
+                'num_points': 20,
+                'boundary_samples': 100,
+                'roc_sample_size': 500
+            }
+        
         try:
-            # Step 1: Run analyses
+            # Step 1: Run analyses (existing code)
             logger.info("📊 Step 1: Running analyses...")
             
             if 'policy' in analysis_types:
@@ -600,7 +731,18 @@ class MasterClimateRunner:
                 logger.info("Running opportunity analysis...")
                 self.run_opportunity_analysis(**analysis_kwargs)
             
-            # Step 2: Create visualizations
+            # Step 1.5: Run sensitivity analysis if requested
+            sensitivity_results = {}
+            if run_sensitivity and 'policy' in analysis_types:
+                logger.info("🔍 Step 1.5: Running threshold sensitivity analysis...")
+                sensitivity_results = self.run_sensitivity_analysis(
+                    policies=policies,
+                    **sensitivity_config,
+                    **{k: v for k, v in analysis_kwargs.items() 
+                    if k in ['start_date', 'end_date', 'companies']}
+                )
+            
+            # Step 2: Create visualizations (existing code)
             logger.info("🎨 Step 2: Creating visualizations...")
             
             policy_viz = []
@@ -613,14 +755,14 @@ class MasterClimateRunner:
             
             comparative_viz = self.create_comparative_visualizations(**analysis_kwargs)
             
-            # Step 3: Generate summary report
+            # Step 3: Generate summary report (existing code)
             logger.info("📋 Step 3: Generating summary report...")
             report_path = self.generate_summary_report()
             
             # Calculate execution time
             execution_time = datetime.now() - start_time
             
-            # Calculate totals
+            # Calculate totals (existing code)
             total_mentions = 0
             if self.policy_results:
                 total_mentions += sum(r['summary_statistics']['total_mentions'] for r in self.policy_results.values())
@@ -633,6 +775,7 @@ class MasterClimateRunner:
                 'policy_results': self.policy_results,
                 'risk_results': self.risk_results,
                 'opportunity_results': self.opportunity_results,
+                'sensitivity_results': sensitivity_results,  # Add this line
                 'csv_files': self.csv_files,
                 'policy_visualizations': policy_viz,
                 'risk_opportunity_visualizations': risk_opp_viz,
@@ -646,6 +789,8 @@ class MasterClimateRunner:
             logger.info("🎉 PIPELINE COMPLETE!")
             logger.info(f"⏱️ Execution time: {execution_time}")
             logger.info(f"📊 Analysis types: {', '.join(analysis_types)}")
+            if sensitivity_results:
+                logger.info(f"🔍 Sensitivity analysis completed for {len(sensitivity_results)} policies")
             logger.info(f"💬 Total mentions found: {total_mentions:,}")
             logger.info(f"📁 All outputs saved to: {self.output_dir}")
             
@@ -664,24 +809,51 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-    # Run all analyses
-    python scripts/run_all.py
+    # Run all analyses with sensitivity analysis
+    python scripts/run_all.py --run-sensitivity
     
-    # Run only policy and risk analysis
-    python scripts/run_all.py --analysis-types policy,risk
+    # Run sensitivity analysis with custom range
+    python scripts/run_all.py --run-sensitivity --sensitivity-range 0.2,0.8 --sensitivity-points 30
     
-    # Run only opportunity analysis
-    python scripts/run_all.py --analysis-types opportunity
-    
-    # Custom paths and specific policies
-    python scripts/run_all.py --index-path data/semantic_indexes/combined \\
-        --output-dir outputs/climate_analysis --policies paris_agreement,eu_green_deal
-    
-    # Custom threshold and frequency
-    python scripts/run_all.py --threshold 0.40 --frequency quarter
+    # Run only policy analysis with sensitivity
+    python scripts/run_all.py --analysis-types policy --run-sensitivity
         """
     )
+    # Add these new arguments
+    parser.add_argument(
+        '--run-sensitivity',
+        action='store_true',
+        help='Run threshold sensitivity analysis for policies'
+    )
     
+    parser.add_argument(
+    '--roc-boundary-samples',
+    type=int,
+    default=100,
+    help='Number of boundary samples per threshold for ROC validation (default: 100)'
+)
+
+    parser.add_argument(
+        '--roc-sample-size',
+        type=int,
+        default=500,
+        help='Total sample size for ROC validation (default: 500)'
+    )
+
+    parser.add_argument(
+        '--sensitivity-range',
+        type=str,
+        default='0.3,0.7',
+        help='Threshold range for sensitivity analysis as min,max (default: 0.3,0.7)'
+    )
+    
+    parser.add_argument(
+        '--sensitivity-points',
+        type=int,
+        default=20,
+        help='Number of threshold points to test (default: 20)'
+    )
+
     parser.add_argument(
         '--index-path',
         type=str,
@@ -748,6 +920,20 @@ Examples:
     
     args = parser.parse_args()
     
+    sensitivity_config = None
+    if args.run_sensitivity:
+        try:
+            range_parts = args.sensitivity_range.split(',')
+            sensitivity_config = {
+                'threshold_range': (float(range_parts[0]), float(range_parts[1])),
+                'num_points': args.sensitivity_points,
+                'boundary_samples': args.roc_boundary_samples,
+                'roc_sample_size': args.roc_sample_size
+            }
+        except (ValueError, IndexError):
+            logger.error("❌ Invalid sensitivity range format. Use: min,max (e.g., 0.3,0.7)")
+            sys.exit(1)
+    
     # Configure logging level
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
@@ -795,9 +981,12 @@ Examples:
         analysis_kwargs = {k: v for k, v in analysis_kwargs.items() if v is not None}
         
         # Run complete pipeline
+        # Run complete pipeline with sensitivity analysis
         results = runner.run_complete_pipeline(
             analysis_types=analysis_types,
             policies=policies,
+            run_sensitivity=args.run_sensitivity,
+            sensitivity_config=sensitivity_config,
             **analysis_kwargs
         )
         
